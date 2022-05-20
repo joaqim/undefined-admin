@@ -1,0 +1,6 @@
+node_modules
+public/app.js
+static/app.js
+.vercel
+.env
+.env.*
