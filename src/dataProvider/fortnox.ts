@@ -2,7 +2,7 @@ import axios from "axios"
 import { stringify } from "query-string"
 import type { CreateParams, DataProvider, DeleteManyParams, DeleteParams, GetListParams, GetManyParams, GetManyReferenceParams, GetOneParams, Options, UpdateManyParams, UpdateParams } from "ra-core"
 import { fetchUtils } from "react-admin"
-import { loadToken, saveToken } from "../tokenUtils"
+import { loadToken, saveToken } from "../utils/TokenUtils"
 
 const fortnoxApiUrl = "https://api.fortnox.se/3"
 const apiUrl = "http://localhost:8080"

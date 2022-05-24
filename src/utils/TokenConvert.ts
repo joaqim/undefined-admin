@@ -7,7 +7,7 @@
 // These functions will throw an error if the JSON doesn't
 // match the expected interface, even if the JSON is valid.
 
-import Token from "./Token";
+import Token from "../Token";
 
 // Converts JSON strings to/from your types
 // and asserts the results of JSON.parse at runtime

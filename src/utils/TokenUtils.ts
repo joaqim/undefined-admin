@@ -1,5 +1,5 @@
 import { deleteRecord } from "thin-backend";
-import Token from "./Token";
+import Token from "../Token";
 import { TokenConvert } from "./TokenConvert";
 
 export const tryValidateToken = (token: Token) => {

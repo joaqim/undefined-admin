@@ -22,7 +22,7 @@ import AuthenticateFortnoxPage from "./src/AuthenticateFortnoxPage";
 import fortnoxAuthProvider from "./src/authProvider/fortnox";
 import fortnoxDataProvider from "./src/dataProvider/fortnox";
 import InvoiceList from "./src/invoices/InvoiceList";
-import { loadToken, saveToken, tryValidateToken } from "./src/tokenUtils";
+import { loadToken, saveToken, tryValidateToken } from "./src/utils/TokenUtils";
 import { ListGuesser } from "react-admin";
 import CurrencyUtils from "./src/utils/CurrencyUtils";
 import Token from "./src/Token";

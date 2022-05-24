@@ -1,12 +1,12 @@
 import { AUTH_LOGIN, AUTH_LOGOUT, AUTH_ERROR, AUTH_CHECK, AuthActionType } from 'react-admin';
-import { saveToken, loadToken, removeToken } from '../tokenUtils';
-import { generateState } from '../stateUtils';
+import { saveToken, loadToken, removeToken } from '../utils/TokenUtils';
+import  generateState  from '../utils/generateState';
 import axios from 'axios';
 import { isConstructorDeclaration } from 'typescript';
 import { createRecord, deleteRecord, FortnoxToken, updateRecord } from 'thin-backend';
 
 import { FortnoxTokenConvert } from '../FortnoxTokenConvert';
-import { TokenConvert } from '../TokenConvert';
+import { TokenConvert } from '../utils/TokenConvert';
 import Token from '../Token';
 
 const authInitUri = "https://apps.fortnox.se/oauth-v1/auth"

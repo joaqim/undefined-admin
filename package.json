@@ -7,6 +7,7 @@
   "dependencies": {
     "@material-ui/core": "4.12.4",
     "@types/thin-backend": "https://thin.dev/ShowTypescriptDeclarationFile?typescriptDeclarationFileId=9b5ae7b0-cf61-4bde-a21a-163b86acac33&accessToken=sUpZALjURcomjjatppnCKUrzYvjLHrDB",
+    "axios": "^0.27.2",
     "express-unless": "1.0.0",
     "ra-core": "4.0.4",
     "react": "^18.1.0",
