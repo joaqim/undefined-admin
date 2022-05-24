@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Admin, Layout, Resource } from "react-admin";
-import type { CoreLayoutProps } from "ra-core";
+import { CoreLayoutProps, useLogin } from "ra-core";
 import * as ReactDOM from "react-dom";
 import { createRoot } from "react-dom/client";
 
-import { query, initThinBackend, ensureIsUser } from "thin-backend";
+import {
+  query,
+  initThinBackend,
+  ensureIsUser,
+  User,
+  loginWithRedirect,
+} from "thin-backend";
 import {
   useQuery,
   useCurrentUser,
@@ -16,33 +22,69 @@ import AuthenticateFortnoxPage from "./src/AuthenticateFortnoxPage";
 import fortnoxAuthProvider from "./src/authProvider/fortnox";
 import fortnoxDataProvider from "./src/dataProvider/fortnox";
 import InvoiceList from "./src/invoices/InvoiceList";
-
-const Tokens = () => {
-  const token = useQuerySingleResult(query("fortnox_tokens"));
-
-  return token ? <div>Access: {token?.accessToken}</div> : null;
-};
+import { loadToken, saveToken, tryValidateToken } from "./src/tokenUtils";
+import { ListGuesser } from "react-admin";
+import CurrencyUtils from "./src/utils/CurrencyUtils";
+import Token from "./src/Token";
 
 const MyLayout = (props: CoreLayoutProps) => <Layout {...props} />;
 
 const App = () => {
   const user = useCurrentUser();
-  const token = useQuerySingleResult(query("fortnox_tokens"));
+
+  let isAuthenticated = false;
+  let [currency, setCurrency] = useState(0);
+  /*
+  const token = useQuerySingleResult(query("fortnox_tokens").where("userId", user.id));
+    */
+
+  useEffect(() => {
+
+    const fetchCurrency = async () => {
+      const currency = await CurrencyUtils.fetchCurrencyRate(new Date(), "EUR");
+      setCurrency(currency)
+    }
+    fetchCurrency()
+    if (!user || isAuthenticated || localStorage.getItem("token")) return;
+    const tryFetchAndValidateToken = async (user: User) => {
+      let token = (await query("fortnox_tokens")
+        .where("userId", user.id)
+        .fetchOne()) as Token;
+
+      if (token) {
+        try {
+          saveToken(token);
+        } catch {
+          fortnoxAuthProvider("AUTH_CHECK", { token });
+          saveToken(token);
+        }
+      }
+
+      isAuthenticated = true;
+    };
+
+    tryFetchAndValidateToken(user).catch((reason: any) => {
+      console.log(reason);
+      isAuthenticated = false;
+    });
+  }, [user, isAuthenticated]);
 
   return (
     <ThinBackend requireLogin>
       <div className="container">
         <AppNavbar />
-        <Tokens />
-        {token && <div>Fortnox Authenticated</div>}
       </div>
+      <h3>{currency.toString()}</h3>
       <Admin
         authProvider={fortnoxAuthProvider}
         dataProvider={fortnoxDataProvider}
         loginPage={AuthenticateFortnoxPage}
         layout={MyLayout}
       >
-        <Resource name="invoices" list={InvoiceList} />
+        {/*   <Resource name="invoices" list={InvoiceList} />
+        <Resource name="articles" list={ListGuesser} />
+        <Resource name="orders" list={ListGuesser} />
+        <Resource name="customers" list={ListGuesser} /> */}
       </Admin>
     </ThinBackend>
   );

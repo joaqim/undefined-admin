@@ -1,9 +1,13 @@
 import { AUTH_LOGIN, AUTH_LOGOUT, AUTH_ERROR, AUTH_CHECK, AuthActionType } from 'react-admin';
-import { Convert, TokenInfo } from '../tokenInfo';
-import { saveToken, loadToken } from '../tokenUtils';
+import { saveToken, loadToken, removeToken } from '../tokenUtils';
 import { generateState } from '../stateUtils';
 import axios from 'axios';
 import { isConstructorDeclaration } from 'typescript';
+import { createRecord, deleteRecord, FortnoxToken, updateRecord } from 'thin-backend';
+
+import { FortnoxTokenConvert } from '../FortnoxTokenConvert';
+import { TokenConvert } from '../TokenConvert';
+import Token from '../Token';
 
 const authInitUri = "https://apps.fortnox.se/oauth-v1/auth"
 const authTokenUri = "https://apps.fortnox.se/oauth-v1/token"
@@ -18,6 +22,39 @@ const FORTNOX_CLIENT_ID = process.env.REACT_APP_FORTNOX_CLIENT_ID;
 if (!FORTNOX_SCOPES) throw new Error("Space delimited Fortnox Scopes missing in REACT_APP_FORTNOX_SCOPES.")
 if (!FORTNOX_REDIRECT_URI) throw new Error("Missing Redirect URI in REACT_APP_FORTNOX_REDIRECT_URI")
 if (!FORTNOX_CLIENT_ID) throw new Error("Missing Client Id in REACT_APP_FORTNOX_CLIENT_ID")
+const sendOrUpdateToken = (id: string | undefined, token: Token) => {
+    if (id) {
+        updateRecord('fortnox_tokens', id, {
+            ...token,
+            scope: process.env.REACT_APP_FORTNOX_SCOPES
+        })
+    } else {
+        createRecord('fortnox_tokens', {
+            ...token,
+            scope: process.env.REACT_APP_FORTNOX_SCOPES
+        })
+    }
+}
+const refreshToken = async (token: Token): Promise<void> => {
+    if (!token.refreshToken) return Promise.reject();
+    console.log(token)
+    try {
+        const newToken = await fetchToken(token.refreshToken, 'refresh_token')
+        console.log({ newToken })
+        if (newToken.accessToken) {
+
+            saveToken(newToken)
+
+            // Send token to database
+
+            return Promise.resolve()
+        }
+    } catch {
+        console.log(`Failed to refresh token with 'refresh_token': ${token.refreshToken ?? 'undefined'}`)
+        removeToken(token)
+        return Promise.reject()
+    }
+}
 
 /**
  * Sanitize the scopes option to be a string.
@@ -28,7 +65,7 @@ if (!FORTNOX_CLIENT_ID) throw new Error("Missing Client Id in REACT_APP_FORTNOX_
 const sanitizeScope = (scopes: string | string[]): string =>
     Array.isArray(scopes) ? scopes.join(' ') : scopes
 
-const fetchToken = async (code: string, grant_type: 'authorization_code' | 'refresh_token'): Promise<TokenInfo> => {
+const fetchToken = async (code: string, grant_type: 'authorization_code' | 'refresh_token'): Promise<Token> => {
     const { data } = await axios({
         method: 'POST',
         url: `${apiUrl}/token`,
@@ -39,9 +76,14 @@ const fetchToken = async (code: string, grant_type: 'authorization_code' | 'refr
         responseType: 'json',
         headers: {
             'Authorization': `Bearer ${code}`
-        }
+        },
+        transformResponse: (r) => r
     })
-    return data as TokenInfo;
+    let token = TokenConvert.toToken(data);
+    const now = new Date();
+    now.setSeconds(now.getSeconds() + token.expiresIn * 1000);
+    token.expiresAt = now.toISOString();
+    return token;
 }
 
 const cleanup = () => {
@@ -66,9 +108,16 @@ const createUri = (state: string, scopes: string | string[]): string => {
     return `${authInitUri}?` + params.toString()
 }
 
-const fortnoxAuthProvider = async (type: unknown /* AuthActionType */, params: { code?: string, state?: string, status?: number } = {}) => {
-    // console.log({ type, ...params })
+const fortnoxAuthProvider = async (type: unknown /* AuthActionType */, params: { code?: string, state?: string, status?: number, token?: Token } = {}) => {
     if (type === AUTH_LOGIN) {
+        if (params.token) {
+            if (params.token.expiresAt && Date.now() > new Date(params.token.expiresAt).getTime()) {
+                return await refreshToken(params.token)
+            }
+            return Promise.resolve()
+        }
+
+
         // 1. Redirect to the issuer to ask authentication
         if (!params.code || !params.state) {
             let state = generateState()
@@ -96,15 +145,19 @@ const fortnoxAuthProvider = async (type: unknown /* AuthActionType */, params: {
 
         // Transform the code to a token via the API
         const token = await fetchToken(params.code, 'authorization_code');
-
         console.log({ token })
-
-        if (!token.access_token) {
+        if (!token) {
             cleanup();
             return Promise.reject()
         }
 
         saveToken(token)
+
+        // Send token to database
+        createRecord('fortnox_tokens', {
+            ...token,
+            scope: process.env.REACT_APP_FORTNOX_SCOPES
+        })
 
         cleanup();
         return Promise.resolve();
@@ -123,23 +176,20 @@ const fortnoxAuthProvider = async (type: unknown /* AuthActionType */, params: {
         return Promise.resolve()
     }
     if (type === AUTH_CHECK) {
-        const token = loadToken()
+        const token = params.token ?? loadToken()
 
         if (!token) {
             if (params.code && params.state) { return; }
             return Promise.reject()
         }
+        // Invalid token
+        if (!token.expiresAt) {
+            return Promise.reject()
+        }
 
         // Token expired, try refresh
-        if (Date.now() > (token.expires_at ?? 0)) {
-            const newToken = await fetchToken(token.refresh_token, 'refresh_token')
-            if (newToken.access_token) {
-                saveToken(newToken)
-                return Promise.resolve()
-            } else {
-                console.log(`Failed to token with 'refresh_token': ${token.refresh_token ?? 'undefined'}`)
-                return Promise.reject()
-            }
+        if (Date.now() > new Date(token.expiresAt).getTime()) {
+            return await refreshToken(token)
         }
         return Promise.resolve()
     }

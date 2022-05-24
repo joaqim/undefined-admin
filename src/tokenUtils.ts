@@ -1,30 +1,33 @@
-import { createRecord } from "thin-backend";
-import { Convert, TokenInfo } from "./tokenInfo";
+import { deleteRecord } from "thin-backend";
+import Token from "./Token";
+import { TokenConvert } from "./TokenConvert";
 
-export const saveToken = (token: TokenInfo | undefined) => {
-    if (!token) throw new Error("Tried to save undefined Token");
-
-    if (!token.expires_at) {
-        let now = Date.now();
-        token.expires_at = now + (token.expires_in * 1000);
+export const tryValidateToken = (token: Token) => {
+    if (!token.expiresIn) {
+        throw new Error("Fortnox Token is missing 'expiresIn', expected: 3600")
+    } else if (token.expiresAt && new Date(token.expiresAt).getTime() < Date.now()) {
+        throw new Error("Token has expired");
     }
-
-    localStorage.setItem('token', Convert.tokenInfoToJson(token));
-    window.dispatchEvent(new Event("new_fortnox_token"));
-    createRecord('fortnox_tokens', {
-        accessToken: token.access_token,
-        refreshToken: token.refresh_token,
-        // expiresAt: new Date(token.expires_at).toISOString().slice(0, 19).replace('T', ' '),
-        expiresAt: new Date(token.expires_at).toISOString(),
-        scopes: process.env.REACT_APP_FORTNOX_SCOPES!
-    })
-    console.log({token})
 }
 
-export const loadToken = (): TokenInfo | null => {
+export const saveToken = (token: Token | null) => {
+    if (!token) throw new Error("Tried to save null Token");
+
+    tryValidateToken(token)
+
+    localStorage.setItem('token', TokenConvert.tokenToJson(token));
+    window.dispatchEvent(new Event("new_fortnox_token"));
+}
+
+export const loadToken = (): Token | null => {
     const json = localStorage.getItem('token') as string;
     if (json) {
-        return Convert.toTokenInfo(json)
+        return TokenConvert.toToken(json)
     }
     return null
+}
+export const removeToken = (token?: Token | undefined) => {
+    if (token?.id) deleteRecord('fortnox_tokens', token.id)
+
+    localStorage.removeItem('token')
 }

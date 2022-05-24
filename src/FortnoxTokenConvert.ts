@@ -1,29 +1,13 @@
-// To parse this data:
-//
-//   import { Convert, TokenInfo } from "./file";
-//
-//   const tokenInfo = Convert.toTokenInfo(json);
-//
-// These functions will throw an error if the JSON doesn't
-// match the expected interface, even if the JSON is valid.
-
-export interface TokenInfo {
-    access_token:  string;
-    refresh_token: string;
-    scope:         string;
-    expires_in:    number;
-    expires_at?:   number;
-    token_type:    string;
-}
+import { FortnoxToken } from "thin-backend";
 
 // Converts JSON strings to/from your types
 // and asserts the results of JSON.parse at runtime
-export class Convert {
-    public static toTokenInfo(json: string): TokenInfo {
+export class FortnoxTokenConvert {
+    public static toFortnoxToken(json: string): FortnoxToken {
         return cast(JSON.parse(json), r("TokenInfo"));
     }
 
-    public static tokenInfoToJson(value: TokenInfo): string {
+    public static fortnoxTokenToJson(value: FortnoxToken): string {
         return JSON.stringify(uncast(value, r("TokenInfo")), null, 2);
     }
 }
@@ -32,7 +16,7 @@ function invalidValue(typ: any, val: any, key: any = ''): never {
     if (key) {
         throw Error(`Invalid value for key "${key}". Expected type ${JSON.stringify(typ)} but got ${JSON.stringify(val)}`);
     }
-    throw Error(`Invalid value ${JSON.stringify(val)} for type ${JSON.stringify(typ)}`, );
+    throw Error(`Invalid value ${JSON.stringify(val)} for type ${JSON.stringify(typ)}`,);
 }
 
 function jsonToJSProps(typ: any): any {
@@ -66,7 +50,7 @@ function transform(val: any, typ: any, getProps: any, key: any = ''): any {
             const typ = typs[i];
             try {
                 return transform(val, typ, getProps);
-            } catch (_) {}
+            } catch (_) { }
         }
         return invalidValue(typs, val);
     }
@@ -123,9 +107,9 @@ function transform(val: any, typ: any, getProps: any, key: any = ''): any {
     if (Array.isArray(typ)) return transformEnum(typ, val);
     if (typeof typ === "object") {
         return typ.hasOwnProperty("unionMembers") ? transformUnion(typ.unionMembers, val)
-            : typ.hasOwnProperty("arrayItems")    ? transformArray(typ.arrayItems, val)
-            : typ.hasOwnProperty("props")         ? transformObject(getProps(typ), typ.additional, val)
-            : invalidValue(typ, val);
+            : typ.hasOwnProperty("arrayItems") ? transformArray(typ.arrayItems, val)
+                : typ.hasOwnProperty("props") ? transformObject(getProps(typ), typ.additional, val)
+                    : invalidValue(typ, val);
     }
     // Numbers can be parsed by Date but shouldn't be.
     if (typ === Date && typeof val !== "number") return transformDate(val);
@@ -162,11 +146,13 @@ function r(name: string) {
 
 const typeMap: any = {
     "TokenInfo": o([
-        { json: "access_token", js: "access_token", typ: "" },
-        { json: "refresh_token", js: "refresh_token", typ: "" },
+        { json: "id", js: "id", typ: u(undefined,"") },
+        { json: "user_id", js: "userId", typ: u(undefined,"") },
+        { json: "access_token", js: "accessToken", typ: "" },
+        { json: "refresh_token", js: "refreshToken", typ: "" },
         { json: "scope", js: "scope", typ: "" },
-        { json: "expires_in", js: "expires_in", typ: 0 },
-        { json: "expires_at", js: "expires_at", typ: 0 },
-        { json: "token_type", js: "token_type", typ: "" },
+        { json: "expires_in", js: "expiresAt", typ: u(undefined, 0) },
+        { json: "expires_at", js: "expiresAt", typ: "" },
+        { json: "token_type", js: "tokenType", typ: "" },
     ], false),
 };

@@ -6,7 +6,8 @@
   "type": "module",
   "dependencies": {
     "@material-ui/core": "4.12.4",
-    "@types/thin-backend": "https://thin.dev/ShowTypescriptDeclarationFile?typescriptDeclarationFileId=d2f7165c-0102-4aff-b8fb-68b2e76c0753&accessToken=ROIqtULLVJfLUGkzToBRMjXOXAyVEpdX",
+    "@types/thin-backend": "https://thin.dev/ShowTypescriptDeclarationFile?typescriptDeclarationFileId=9b5ae7b0-cf61-4bde-a21a-163b86acac33&accessToken=sUpZALjURcomjjatppnCKUrzYvjLHrDB",
+    "express-unless": "1.0.0",
     "ra-core": "4.0.4",
     "react": "^18.1.0",
     "react-admin": "^4.1.0",

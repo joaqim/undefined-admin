@@ -45,7 +45,7 @@ const httpClient = (url: string, options?: { headers?: Headers }) => {
     return fetchUtils.fetchJson(url, options);
 };
 
-function capitalizeFirstLetter(str: string) {
+const capitalizeFirstLetter = (str: string):string => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
@@ -60,7 +60,7 @@ const get = async (resource: string, id: number = 0) => {
         method: 'POST',
         url,
         data: {
-            access_token: token.access_token
+            access_token: token.accessToken
         },
         /*params: {
             access_token: token.access_token
