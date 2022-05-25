@@ -1,4 +1,5 @@
 import React from "react";
+import { DateInput } from "react-admin";
 import {
   List,
   Datagrid,
@@ -7,14 +8,38 @@ import {
   BooleanField,
   DateField,
 } from "react-admin";
+import InvoiceShow from "./InvoiceShow";
+
+const listFilters = [<DateInput source="InvoiceDate" alwaysOn />];
 
 const InvoiceList = () => (
-  <List>
-    <Datagrid rowClick="edit">
+  <List
+    filters={listFilters}
+    perPage={5}
+    sort={{ field: "date", order: "desc" }}
+  >
+    <Datagrid
+      rowClick="expand"
+      expand={<InvoiceShow />}
+      sx={{
+        "& .column-customer_id": {
+          display: { xs: "none", md: "table-cell" },
+        },
+        "& .column-total_ex_taxes": {
+          display: { xs: "none", md: "table-cell" },
+        },
+        "& .column-delivery_fees": {
+          display: { xs: "none", md: "table-cell" },
+        },
+        "& .column-taxes": {
+          display: { xs: "none", md: "table-cell" },
+        },
+      }}
+    >
       {/* <TextField source="@url" /> */}
       {/* <NumberField source="Balance" /> */}
       <TextField source="CustomerName" />
-      <TextField source="CustomerNumber" />
+      {/* <TextField source="CustomerNumber" /> */}
       <NumberField source="Total" />
       <BooleanField source="Booked" />
       <BooleanField source="Cancelled" />

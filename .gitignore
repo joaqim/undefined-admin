@@ -4,3 +4,4 @@ static/app.js
 .vercel
 .env
 .env.*
+workspace.code-workspace
