@@ -5,7 +5,7 @@ import { fetchUtils } from "react-admin"
 import { loadToken, saveToken } from "../utils/TokenUtils"
 
 const fortnoxApiUrl = "https://api.fortnox.se/3"
-const apiUrl = "http://localhost:8080"
+const backendApiUrl = "http://localhost:8080"
 
 const generateUrl = (url: string, ...params: unknown[]) => {
     const query = stringify({ ...params })
@@ -49,13 +49,13 @@ const capitalizeFirstLetter = (str: string):string => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-const get = async (resource: string, id: number = 0) => {
+const get = async (resource: string, id?: number) => {
     const token = loadToken()
     if (!token) {
         return Promise.reject()
     }
     saveToken(token)
-    const url = `${apiUrl}/${resource}/${id > 0 ? id : ""}`
+    const url = `${backendApiUrl}/${resource}/${id ? id : ""}`
     const { data } = await axios({
         method: 'POST',
         url,

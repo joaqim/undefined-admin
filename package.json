@@ -6,12 +6,13 @@
   "type": "module",
   "dependencies": {
     "@material-ui/core": "4.12.4",
-    "@types/thin-backend": "https://thin.dev/ShowTypescriptDeclarationFile?typescriptDeclarationFileId=9b5ae7b0-cf61-4bde-a21a-163b86acac33&accessToken=sUpZALjURcomjjatppnCKUrzYvjLHrDB",
     "axios": "^0.27.2",
     "express-unless": "1.0.0",
+    "proxy-polyfill": "^0.3.2",
     "ra-core": "4.0.4",
     "react": "^18.1.0",
     "react-admin": "^4.1.0",
+    "react-app-polyfill": "^3.0.0",
     "react-dom": "^18.1.0",
     "thin-backend": "*",
     "typescript": "^4.5.3"
@@ -20,13 +21,14 @@
   "license": "ISC",
   "scripts": {
     "dev": "node server.js",
-    "build": "./node_modules/.bin/esbuild --define:process.env.NODE_ENV=\\\"production\\\" --define:process.env.BACKEND_URL=\\\"$BACKEND_URL\\\" app.tsx --bundle --outfile=public/app.js",
+    "build": "./node_modules/.bin/esbuild --define:process.env.NODE_ENV=\\\"production\\\" --define:process.env.BACKEND_URL=\\\"$BACKEND_URL\\\" src/index.tsx --bundle --outfile=public/app.js",
     "typecheck": "node_modules/.bin/tsc --watch"
   },
   "devDependencies": {
     "@types/node": "^16.11.12",
     "@types/react": "^18.0.9",
     "@types/react-dom": "^18.0.4",
+    "@types/thin-backend": "https://thin.dev/ShowTypescriptDeclarationFile?typescriptDeclarationFileId=6f750767-f454-4462-98a5-08a4d7d718e0&accessToken=VmHjqOLCPcgQhJYOUqhtMcDwKrqplppr",
     "dotenv": "^10.0.0",
     "esbuild": "^0.13.1"
   }
