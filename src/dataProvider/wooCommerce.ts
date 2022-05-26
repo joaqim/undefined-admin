@@ -1,4 +1,3 @@
-import WooCommerceRestApi from "@woocommerce/woocommerce-rest-api";
 import axios from "axios";
 import {
   DataProvider,
@@ -11,12 +10,16 @@ import {
 } from "ra-core";
 import { loadCredentials } from "../utils/WooCommerce";
 
-const get = async (resources: string, id?: number): Promise<any> => {
+type GetParams = Partial<GetListParams & GetOneParams>;
+
+const get = async (resources: string, params: GetParams): Promise<any> => {
   const credentials = loadCredentials();
   if (!credentials) return Promise.reject();
   const { consumerKey, consumerSecret, storefrontUrl } = credentials;
   if (!consumerKey || !consumerSecret) return Promise.reject();
   const backendApiUrl = "http://localhost:8080";
+
+  const { id, pagination, sort, filter } = params;
 
   const url = `${backendApiUrl}/wc-${resources}/${id ? id : ""}`;
   const { data } = await axios({
@@ -25,7 +28,10 @@ const get = async (resources: string, id?: number): Promise<any> => {
     data: {
       consumer_key: consumerKey,
       consumer_secret: consumerSecret,
-      storefront_url: storefrontUrl
+      storefront_url: storefrontUrl,
+      sort, // {field: string, order: string}
+      filter, // {[k: string]: any}
+      pagination, // {page: number, perPage: number}
     },
     responseType: "json",
   });
@@ -47,13 +53,13 @@ const get = async (resources: string, id?: number): Promise<any> => {
 const wooCommerceDataProvider = <DataProvider<string>>{
   getList: async (resource: string, params: GetListParams) => {
     try {
-      return get(resource);
+      return get(resource, params);
     } catch {
       return Promise.reject();
     }
   },
   getOne: (resource: string, params: GetOneParams) => {
-    console.log("Get one" + params.id)
+    console.log("Get one" + params.id);
     try {
       get(resource, params.id);
     } catch {

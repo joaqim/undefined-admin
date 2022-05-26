@@ -5,15 +5,15 @@ import {
   AUTH_CHECK,
   AuthActionType,
 } from "react-admin";
-import { saveToken, loadToken, removeToken } from "../TokenUtils";
+import {
+  saveToken,
+  loadToken,
+  removeToken,
+  sendOrUpdateToken,
+} from "../utils/TokenUtils";
 import axios from "axios";
 import { isConstructorDeclaration } from "typescript";
-import {
-  createRecord,
-  deleteRecord,
-  FortnoxToken,
-  updateRecord,
-} from "thin-backend";
+import { createRecord } from "thin-backend";
 
 import { FortnoxTokenConvert } from "../FortnoxTokenConvert";
 import Token from "../Token";
@@ -42,25 +42,22 @@ if (!FORTNOX_CLIENT_ID)
 
 const refreshFortnoxToken = async (token: Token): Promise<void> => {
   if (!token.refreshToken) return Promise.reject();
-  console.log(token);
   try {
     const newToken = await fetchFortnoxToken(
       token.refreshToken,
       "refresh_token"
     );
     console.log({ newToken });
-    if (newToken.accessToken) {
-      if (!saveToken(newToken)) return Promise.reject();
+    if (!newToken || !newToken.accessToken) throw Error();
+    if (!saveToken(newToken)) return Promise.reject();
 
-      // Send token to database
+    // Send token to database
+    sendOrUpdateToken(newToken, token.id);
 
-      return Promise.resolve();
-    }
+    return Promise.resolve();
   } catch {
     console.log(
-      `Failed to refresh token with 'refresh_token': ${
-        token.refreshToken ?? "undefined"
-      }`
+      `Failed to refresh token with 'refresh_token': ${token.refreshToken}`
     );
     removeToken(token);
     return Promise.reject();
@@ -79,14 +76,26 @@ const sanitizeScope = (scopes: string | string[]): string =>
 const fetchFortnoxToken = async (
   code: string,
   grant_type: "authorization_code" | "refresh_token"
-): Promise<Token> => {
+): Promise<Token | void> => {
+  let body: {
+    grant_type: string;
+    code?: string;
+    redirect_uri?: string;
+    refresh_token?: string;
+  } = {
+    grant_type,
+  };
+
+  if (grant_type == "refresh_token") {
+    body.refresh_token = code;
+  } else {
+    body.code = code;
+    body.redirect_uri = FORTNOX_REDIRECT_URI;
+  }
   const { data } = await axios({
     method: "POST",
     url: `${apiUrl}/token`,
-    data: {
-      code,
-      grant_type,
-    },
+    data: body,
     responseType: "json",
     headers: {
       Authorization: `Bearer ${code}`,
@@ -180,14 +189,7 @@ const fortnoxAuthProvider = async (
     let { expiresAt, expiresIn, accessToken, refreshToken, scope, tokenType } =
       token;
     // Send token to database
-    createRecord("fortnox_tokens", {
-      accessToken,
-      refreshToken,
-      tokenType,
-      expiresAt,
-      expiresIn,
-      scope: scope ?? process.env.REACT_APP_FORTNOX_SCOPES,
-    });
+    sendOrUpdateToken(token);
 
     cleanup();
     return Promise.resolve();

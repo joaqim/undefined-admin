@@ -1,5 +1,5 @@
 import { WooCredentials } from "../types";
-import { TokenConvert } from "../TokenConvert";
+import { TokenConvert } from "../utils/TokenConvert";
 import { query, User } from "thin-backend";
 
 export const saveCredentials = (credentials: WooCredentials) => {
@@ -25,7 +25,7 @@ export const tryFetchWooCommerceCredentials = async (
   let keys = await query("woocommerce_keys")
     .where("userId", user.id)
     // .filterWhere("name", "Naudrinks - Live")
-     .filterWhere("name", "GamerBulk - Live")
+    .filterWhere("name", "GamerBulk - Live")
     .fetchOne();
 
   return keys as WooCredentials;

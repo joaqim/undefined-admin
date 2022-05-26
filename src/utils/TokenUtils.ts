@@ -1,5 +1,5 @@
 import { deleteRecord, updateRecord, createRecord } from "thin-backend";
-import Token from "./Token";
+import Token from "../Token";
 import { TokenConvert } from "./TokenConvert";
 
 export const tryValidateToken = (token: Token): boolean => {
@@ -42,14 +42,15 @@ export const removeToken = (token?: Token | undefined) => {
   localStorage.removeItem("token");
 };
 
-export const sendOrUpdateToken = (id: string | undefined, token: Token) => {
+export const sendOrUpdateToken = (token: Token, id?: string | undefined) => {
+  let updatedToken = {
+    accessToken: token.accessToken,
+    refreshToken: token.refreshToken,
+    expiresAt: token.expiresAt,
+    expiresIn: token.expiresIn,
+    scope: token.scope ?? process.env.REACT_APP_FORTNOX_SCOPES,
+  };
   id
-    ? updateRecord("fortnox_tokens", id, {
-        ...token,
-        scope: token.scope ?? process.env.REACT_APP_FORTNOX_SCOPES,
-      })
-    : createRecord("fortnox_tokens", {
-        ...token,
-        scope: token.scope ?? process.env.REACT_APP_FORTNOX_SCOPES,
-      });
+    ? updateRecord("fortnox_tokens", id, updatedToken)
+    : createRecord("fortnox_tokens", updatedToken);
 };

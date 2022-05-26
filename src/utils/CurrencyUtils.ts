@@ -32,7 +32,9 @@ abstract class CurrencyUtils {
             },
             responseType: 'text'
         })
-        return parseFloat(data)
+        console.log(data)
+        if(typeof data === "string") return parseFloat(data)
+        return data
     }
 }
 

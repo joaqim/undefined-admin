@@ -24,7 +24,7 @@ import AuthenticateFortnoxPage from "./AuthenticateFortnoxPage";
 import fortnoxAuthProvider from "./authProvider/fortnox";
 import fortnoxDataProvider from "./dataProvider/fortnox";
 import InvoiceList from "./invoices/InvoiceList";
-import { loadToken, saveToken, tryValidateToken } from "./TokenUtils";
+import { loadToken, saveToken, tryValidateToken } from "./utils/TokenUtils";
 import { ListGuesser } from "react-admin";
 import CurrencyUtils from "./utils/CurrencyUtils";
 import Token from "./Token";
@@ -70,16 +70,16 @@ const App = () => {
     */
 
   useEffect(() => {
-    /*
     const fetchCurrency = async () => {
-      setLoading(true);
-      CurrencyUtils.fetchCurrencyRate(new Date(), "EUR").then(() => {
+     setLoading(true);
+      CurrencyUtils.fetchCurrencyRate(new Date(), "EUR").then((currencyRate) => {
         setLoading(false);
-        setCurrency(currency);
+        setCurrency(currencyRate);
       });
+
+     
     };
-    fetchCurrency();
-    */
+    //fetchCurrency();
 
     if (!user) return;
 
@@ -118,8 +118,8 @@ const App = () => {
       {/* <CustomRoutes>
         <Route path="/fortnox" element={<FortnoxPage />} />
       </CustomRoutes> */}
-      {/* <FortnoxPage/> */}
-      <Admin
+      <FortnoxPage/>
+      {/* <Admin
         authProvider={wooCommerceAuthProvider}
         dataProvider={wooCommerceDataProvider}
         layout={Layout}
@@ -127,7 +127,7 @@ const App = () => {
         theme={lightTheme}
       >
         <Resource name="orders" list={WcOrderList} />
-      </Admin>
+      </Admin> */}
     </ThinBackend>
   );
 };

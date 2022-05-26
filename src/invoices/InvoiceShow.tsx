@@ -3,11 +3,11 @@ import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
 import { ReferenceField, TextField, useRecordContext } from "react-admin";
 
 // import Basket from '../orders/Basket';
-// import { Customer, Invoice } from '../types';
-import { Customer, Invoice } from "findus";
+import { Invoice } from "./Invoice"
 
 const InvoiceShow = () => {
   const record = useRecordContext<Invoice>();
+  console.log({ record })
   if (!record) return null;
   return (
     <Card sx={{ width: 600, margin: "auto" }}>
@@ -15,12 +15,12 @@ const InvoiceShow = () => {
         <Grid container spacing={2}>
           <Grid item xs={6}>
             <Typography variant="h6" gutterBottom>
-              Posters Galore
+              Undefined Stories
             </Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography variant="h6" gutterBottom align="right">
-              Invoice {record.documentNumber}
+              Invoice {record.DocumentNumber}
             </Typography>
           </Grid>
         </Grid>
@@ -42,7 +42,7 @@ const InvoiceShow = () => {
               Date{" "}
             </Typography>
             <Typography gutterBottom align="center">
-              {record.invoiceDate.toLocaleDateString()}
+              {record.InvoiceDate?.toString()}
             </Typography>
           </Grid>
 
@@ -74,15 +74,22 @@ const InvoiceShow = () => {
   );
 };
 
+interface Customer {
+  Name: string;
+  Address1: string;
+  City: string;
+  ZipCode: number;
+}
+
 const CustomerField = () => {
   const record = useRecordContext<Customer>();
   return record ? (
     <Typography>
-      {record.name}
+      {record.Name}
       <br />
-      {record.address1}
+      {record.Address1}
       <br />
-      {record.city}, {record.zipCode}
+      {record.City}, {record.ZipCode}
     </Typography>
   ) : null;
 };

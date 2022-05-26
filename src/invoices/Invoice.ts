@@ -1,0 +1,30 @@
+export interface Invoice {
+  "@url"?: string;
+  Balance?: number;
+  Booked?: boolean;
+  Cancelled?: boolean;
+  CostCenter?: string;
+  Currency?: string;
+  CurrencyRate?: string;
+  CurrencyUnit?: number;
+  CustomerName?: string;
+  CustomerNumber?: string;
+  DocumentNumber?: string;
+  DueDate?: Date;
+  ExternalInvoiceReference1?: string;
+  ExternalInvoiceReference2?: string;
+  InvoiceDate?: Date;
+  InvoiceType?: string;
+  NoxFinans?: boolean;
+  OCR?: string;
+  VoucherNumber?: null;
+  VoucherSeries?: null;
+  VoucherYear?: null;
+  WayOfDelivery?: string;
+  TermsOfPayment?: string;
+  Project?: string;
+  Sent?: boolean;
+  Total?: number;
+  FinalPayDate?: null;
+  id?: number;
+}
