@@ -14,7 +14,7 @@ import type {
   UpdateParams,
 } from "ra-core";
 import { fetchUtils } from "react-admin";
-import { loadToken, saveToken } from "../utils/TokenUtils";
+import { loadToken, trySaveToken } from "../utils/TokenUtils";
 
 const fortnoxApiUrl = "https://api.fortnox.se/3";
 const backendApiUrl = "http://localhost:8080";
@@ -39,8 +39,19 @@ const headers = (data?: string | null) => { //: Headers & Record<'Access-Token',
     )
 }*/
 
-type SortOrders = "ascending" | "descending" | null;
-type Resources = "invoice" | "customer" | "article" | "order";
+type Resources = "invoices" | "customers" | "articles" | "orders";
+
+type InvoiceFilters = "cancelled" | "fullypaid" | "unpaid" | "unpaidoverdue" | "unbooked"
+
+interface GlobalSearch {
+  lastmodfied: string; // 2022-01-01 01:00
+  financialyear: string; // 1
+  financialyeardate: string; // 2022-03-06
+
+  // Only for Invoices and Orders:
+  fromdate: string; // 2022-03-06
+  toDate: string; // 2022-03-06
+}
 
 //const httpClient = fetchUtils.fetchJson;
 
@@ -56,6 +67,7 @@ const httpClient = (url: string, options?: { headers?: Headers }) => {
   return fetchUtils.fetchJson(url, options);
 };
 
+// TODO: Switch to using capitalized 'resources' string
 const capitalizeFirstLetter = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
@@ -67,11 +79,11 @@ const get = async (resource: string, params: GetParams) => {
   if (!token) {
     return Promise.reject();
   }
-  saveToken(token);
+  trySaveToken(token);
 
   const { id, pagination, sort, filter } = params;
 
-  const url = `${backendApiUrl}/${resource}/${id ? id : ""}`;
+  const url = `${backendApiUrl}/retrieve/${resource}/${id ? id : ""}`;
   const { data } = await axios({
     method: "POST",
     url,
@@ -81,9 +93,6 @@ const get = async (resource: string, params: GetParams) => {
       sort,
       filter,
     },
-    /*params: {
-            access_token: token.access_token
-        },*/
     responseType: "json",
   });
   const resourceArray = data[capitalizeFirstLetter(resource)] as unknown[];
@@ -93,52 +102,7 @@ const get = async (resource: string, params: GetParams) => {
 //export default <DataProvider<Resources>>{
 const fortnoxDataProvider = <DataProvider<string>>{
   getList: async (resource: string, params: GetListParams) => {
-    /*
-        if(resource = "dummy")
-            return Promise.resolve({ data: [{ id: 'id', name: 'Dummy', date: new Date() }], total: 1 });
-        */
-
     return get(resource, params);
-    /*
-
-        const { data } = await axios({
-            method: 'POST',
-            url: `${apiUrl}/invoices`,
-            data: {
-                access_token: token.access_token
-                // code: params.code,
-                //access_token
-                // client_secret
-            },
-            params: {
-                access_token: token.access_token
-            },
-            responseType: 'json',
-            headers: {
-                // 'Authorization': `Bearer ${params.code}`
-            }
-        })
-        return { data: data.Invoices, total: data.Invoices.length }
-        */
-
-    /*
-        const url = generateUrl(`${apiUrl}/${resource}`,
-            sort: JSON.stringify([field, order])
-        );
-        */
-    /*
-        console.log({ resource, params })
-        const url = `${fortnoxApiUrl}/${resource}`
-        return httpClient(url
-        ).then(({ json }: { json: string }) => {
-            console.log(JSON.parse(json))
-            return Promise.resolve({ data: json })
-        }
-        ).catch((reason: any) => {
-            console.log(reason)
-            return Promise.reject();
-        })
-        */
   },
   getOne: (resource: string, params: GetOneParams) => {
     return get(resource, params);

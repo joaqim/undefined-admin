@@ -6,7 +6,7 @@ import {
   AuthActionType,
 } from "react-admin";
 import {
-  saveToken,
+  trySaveToken,
   loadToken,
   removeToken,
   sendOrUpdateToken,
@@ -49,9 +49,9 @@ const refreshFortnoxToken = async (token: Token): Promise<void> => {
     );
     console.log({ newToken });
     if (!newToken || !newToken.accessToken) throw Error();
-    if (!saveToken(newToken)) return Promise.reject();
+    if (!trySaveToken(newToken)) return Promise.reject();
 
-    // Send token to database
+    // Send or update token in remote database
     sendOrUpdateToken(newToken, token.id);
 
     return Promise.resolve();
@@ -182,7 +182,7 @@ const fortnoxAuthProvider = async (
       return Promise.reject();
     }
 
-    if (!saveToken(token)) {
+    if (!trySaveToken(token)) {
       return Promise.reject();
     }
 
@@ -222,7 +222,7 @@ const fortnoxAuthProvider = async (
     }
 
     // Token expired, try refresh
-    if (Date.now() > new Date(token.expiresAt).getTime()) {
+    if (Date.now() >= new Date(token.expiresAt).getTime()) {
       return await refreshFortnoxToken(token);
     }
     return Promise.resolve();

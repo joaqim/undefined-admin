@@ -6,6 +6,7 @@
   "type": "module",
   "dependencies": {
     "@material-ui/core": "4.12.4",
+    "@mui/icons-material": "^5.8.0",
     "axios": "^0.27.2",
     "express-unless": "1.0.0",
     "proxy-polyfill": "^0.3.2",

@@ -1,57 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Admin, CustomRoutes, Resource } from "react-admin";
-import { CoreLayoutProps, useLogin } from "ra-core";
-import * as ReactDOM from "react-dom";
-import { createRoot } from "react-dom/client";
-import { WcOrderList } from "./orders/WcOrderList";
-import { Route } from 'react-router';
 
-import {
-  query,
-  initThinBackend,
-  ensureIsUser,
-  User,
-  loginWithRedirect,
-} from "thin-backend";
-import {
-  useQuery,
-  useCurrentUser,
-  ThinBackend,
-  useQuerySingleResult,
-} from "thin-backend/react";
+import { query, initThinBackend, User, FortnoxToken } from "thin-backend";
+import { useCurrentUser, ThinBackend } from "thin-backend/react";
 import AppNavbar from "./AppNavbar";
-import AuthenticateFortnoxPage from "./AuthenticateFortnoxPage";
 import fortnoxAuthProvider from "./authProvider/fortnox";
-import fortnoxDataProvider from "./dataProvider/fortnox";
-import InvoiceList from "./invoices/InvoiceList";
-import { loadToken, saveToken, tryValidateToken } from "./utils/TokenUtils";
-import { ListGuesser } from "react-admin";
+import { trySaveToken, sendOrUpdateToken } from "./utils/TokenUtils";
 import CurrencyUtils from "./utils/CurrencyUtils";
 import Token from "./Token";
-import { wooCommerceAuthProvider } from "./authProvider";
-import { wooCommerceDataProvider } from "./dataProvider";
 import {
   saveCredentials,
   tryFetchWooCommerceCredentials,
 } from "./utils/WooCommerce";
 import { WooCredentials } from "./types";
-import { Layout } from "./layout";
-import { lightTheme } from "./layout/themes";
 import { FortnoxPage } from "./FortnoxPage";
 
-const tryFetchAndValidateToken = async (user: User) => {
-  let token = (await query("fortnox_tokens")
+const tryFetchAndValidateToken = async (user: User): Promise<Token> => {
+  return query("fortnox_tokens")
     .where("userId", user.id)
-    .fetchOne()) as Token;
-
-  if (token) {
-    try {
-      saveToken(token);
-    } catch {
-      fortnoxAuthProvider("AUTH_CHECK", { token });
-      saveToken(token);
-    }
-  }
+    .fetchOne()
+    .then((token: FortnoxToken) => token as Token);
 };
 
 // This needs to be run before any calls to `query`, `createRecord`, etc.
@@ -71,18 +38,18 @@ const App = () => {
 
   useEffect(() => {
     const fetchCurrency = async () => {
-     setLoading(true);
-      CurrencyUtils.fetchCurrencyRate(new Date(), "EUR").then((currencyRate) => {
-        setLoading(false);
-        setCurrency(currencyRate);
-      });
-
-     
+      setLoading(true);
+      CurrencyUtils.fetchCurrencyRate(new Date(), "EUR").then(
+        (currencyRate) => {
+          setLoading(false);
+          setCurrency(currencyRate);
+        }
+      );
     };
-    //fetchCurrency();
 
     if (!user) return;
 
+    /*
     if (!isAuthenticatedWoo) {
       setLoading(true);
       tryFetchWooCommerceCredentials(user).then(
@@ -94,14 +61,18 @@ const App = () => {
         }
       );
     }
+    */
 
     if (isAuthenticated || localStorage.getItem("token")) return;
 
     setLoading(true);
     tryFetchAndValidateToken(user)
-      .then(() => {
+      .then((token) => {
         setLoading(false);
         setAuthenticated(true);
+        // sendOrUpdateToken(token);
+        console.log({token})
+        trySaveToken(token)
       })
       .catch((reason: any) => {
         console.log(reason);
@@ -111,14 +82,11 @@ const App = () => {
 
   return (
     <ThinBackend requireLogin>
-      <div className="container">
-        <AppNavbar />
-      </div>
-      <h3>{currency.toString()}</h3>
+      <AppNavbar />
       {/* <CustomRoutes>
         <Route path="/fortnox" element={<FortnoxPage />} />
       </CustomRoutes> */}
-      <FortnoxPage/>
+      <FortnoxPage />
       {/* <Admin
         authProvider={wooCommerceAuthProvider}
         dataProvider={wooCommerceDataProvider}
@@ -132,7 +100,7 @@ const App = () => {
   );
 };
 
-export default App
+export default App;
 /*
 // Start the React app
 // ReactDOM.render(<App/>, document.getElementById('app'));

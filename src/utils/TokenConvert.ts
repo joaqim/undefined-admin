@@ -14,19 +14,19 @@ import { WooCredentials } from "../types";
 // and asserts the results of JSON.parse at runtime
 export class TokenConvert {
   public static toToken(json: string): Token {
-    return cast(JSON.parse(json), r("Token"));
+    return cast(JSON.parse(json), reference("Token"));
   }
 
   public static tokenToJson(value: Token): string {
-    return JSON.stringify(uncast(value, r("Token")), null, 2);
+    return JSON.stringify(uncast(value, reference("Token")), null, 2);
   }
 
   public static toWooCredentials(json: string): WooCredentials {
-    return cast(JSON.parse(json), r("WooCredentials"));
+    return cast(JSON.parse(json), reference("WooCredentials"));
   }
 
   public static wooCredentialsToJson(value: WooCredentials): string {
-    return JSON.stringify(uncast(value, r("WooCredentials")), null, 2);
+    return JSON.stringify(uncast(value, reference("WooCredentials")), null, 2);
   }
 }
 
@@ -157,39 +157,36 @@ function uncast<T>(val: T, typ: any): any {
   return transform(val, typ, jsToJSONProps);
 }
 
-function a(typ: any) {
+function array(typ: any) {
   return { arrayItems: typ };
 }
 
-function u(...typs: any[]) {
+function union(...typs: any[]) {
   return { unionMembers: typs };
 }
 
-function o(props: any[], additional: any) {
+function object(props: any[], additional: any) {
   return { props, additional };
 }
 
-function m(additional: any) {
-  return { props: [], additional };
-}
 
-function r(name: string) {
+function reference(name: string) {
   return { ref: name };
 }
 
 const typeMap: any = {
-  Token: o(
+  Token: object(
     [
-      { json: "access_token", js: "accessToken", typ: u(undefined, "") },
-      { json: "refresh_token", js: "refreshToken", typ: u(undefined, "") },
-      { json: "scope", js: "scope", typ: u(undefined, "") },
-      { json: "expires_in", js: "expiresIn", typ: u(undefined, 0) },
-      { json: "token_type", js: "tokenType", typ: u(undefined, "") },
+      { json: "access_token", js: "accessToken", typ: union(undefined, "") },
+      { json: "refresh_token", js: "refreshToken", typ: union(undefined, "") },
+      { json: "scope", js: "scope", typ: union(undefined, "") },
+      { json: "expires_in", js: "expiresIn", typ: union(undefined, 0) },
+      { json: "token_type", js: "tokenType", typ: union(null, "") },
 
       // extends Partial<FortnoxToken>
-      { json: "id", js: "id", typ: u(undefined, "") },
-      { json: "user_id", js: "userId", typ: u(undefined, "") },
-      { json: "expires_at", js: "expiresAt", typ: u(undefined, "") },
+      { json: "id", js: "id", typ: union(undefined, "") },
+      { json: "user_id", js: "userId", typ: union(undefined, "") },
+      { json: "expires_at", js: "expiresAt", typ: union(undefined, "") },
       // { json: "access_token", js: "accessToken", typ: u(undefined,"") },
       // { json: "refresh_token", js: "refreshToken", typ: u(undefined,"") },
       // { json: "scope", js: "scope", typ: u(undefined,"") },
@@ -198,18 +195,18 @@ const typeMap: any = {
     ],
     false
   ),
-  WooCredentials: o(
+  WooCredentials: object(
     [
-      { json: "consumer_key", js: "consumerKey", typ: u(undefined, "") },
-      { json: "consumer_secret", js: "consumerSecret", typ: u(undefined, "") },
-      { json: "storefront_url", js: "storefrontUrl", typ: u(undefined, "") },
-      { json: "name", js: "name", typ: u(undefined, "") },
+      { json: "consumer_key", js: "consumerKey", typ: union(undefined, "") },
+      { json: "consumer_secret", js: "consumerSecret", typ: union(undefined, "") },
+      { json: "storefront_url", js: "storefrontUrl", typ: union(undefined, "") },
+      { json: "name", js: "name", typ: union(undefined, "") },
 
       // extends Partial<WooCommerceKeys>
-      { json: "id", js: "id", typ: u(undefined, "") },
-      { json: "user_id", js: "userId", typ: u(undefined, "") },
-      { json: "created_at", js: "createdAt", typ: u(undefined, "") },
-      { json: "updated_at", js: "updatedAt", typ: u(undefined, "") },
+      { json: "id", js: "id", typ: union(undefined, "") },
+      { json: "user_id", js: "userId", typ: union(undefined, "") },
+      { json: "created_at", js: "createdAt", typ: union(undefined, "") },
+      { json: "updated_at", js: "updatedAt", typ: union(undefined, "") },
     ],
     false
   ),

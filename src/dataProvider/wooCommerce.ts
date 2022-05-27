@@ -12,7 +12,9 @@ import { loadCredentials } from "../utils/WooCommerce";
 
 type GetParams = Partial<GetListParams & GetOneParams>;
 
-const get = async (resources: string, params: GetParams): Promise<any> => {
+type Resources = "orders"
+
+const get = async (resources: Resources, params: GetParams): Promise<any> => {
   const credentials = loadCredentials();
   if (!credentials) return Promise.reject();
   const { consumerKey, consumerSecret, storefrontUrl } = credentials;
@@ -21,7 +23,7 @@ const get = async (resources: string, params: GetParams): Promise<any> => {
 
   const { id, pagination, sort, filter } = params;
 
-  const url = `${backendApiUrl}/wc-${resources}/${id ? id : ""}`;
+  const url = `${backendApiUrl}/retrieve/wc-${resources}/${id ? id : ""}`;
   const { data } = await axios({
     method: "POST",
     url,
@@ -51,14 +53,14 @@ const get = async (resources: string, params: GetParams): Promise<any> => {
 };
 
 const wooCommerceDataProvider = <DataProvider<string>>{
-  getList: async (resource: string, params: GetListParams) => {
+  getList: async (resource: Resources, params: GetListParams) => {
     try {
       return get(resource, params);
     } catch {
       return Promise.reject();
     }
   },
-  getOne: (resource: string, params: GetOneParams) => {
+  getOne: (resource: Resources, params: GetOneParams) => {
     console.log("Get one" + params.id);
     try {
       get(resource, params.id);
@@ -66,16 +68,16 @@ const wooCommerceDataProvider = <DataProvider<string>>{
       return Promise.reject();
     }
   },
-  getMany: (resource: string, params: GetManyParams) => {
+  getMany: (resource: Resources, params: GetManyParams) => {
     return Promise.reject();
   },
-  getManyReference: (resource: string, params: GetManyReferenceParams) => {
+  getManyReference: (resource: Resources, params: GetManyReferenceParams) => {
     return Promise.reject();
   },
-  update: (resource: string, params: UpdateParams) => {
+  update: (resource: Resources, params: UpdateParams) => {
     return Promise.reject();
   },
-  updateMany: (resource: string, params: UpdateManyParams) => {
+  updateMany: (resource: Resources, params: UpdateManyParams) => {
     return Promise.reject();
   },
 };

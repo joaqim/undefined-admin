@@ -3,7 +3,7 @@ import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
 import { ReferenceField, TextField, useRecordContext } from "react-admin";
 
 // import Basket from '../orders/Basket';
-import { Invoice } from "./Invoice"
+import { Invoice } from "findus"
 
 const InvoiceShow = () => {
   const record = useRecordContext<Invoice>();

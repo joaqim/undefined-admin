@@ -38,6 +38,7 @@ const InvoiceList = () => (
     >
       {/* <TextField source="@url" /> */}
       {/* <NumberField source="Balance" /> */}
+      <TextField source="DocumentNumber" />
       <TextField source="CustomerName" />
       {/* <TextField source="CustomerNumber" /> */}
       <NumberField source="Total" />
@@ -48,7 +49,6 @@ const InvoiceList = () => (
       <TextField source="CurrencyRate" />
       <NumberField source="CurrencyUnit" />
 
-      <TextField source="DocumentNumber" />
       <DateField source="DueDate" />
       {/* <DateField source="ExternalInvoiceReference1" /> */}
       {/* <DateField source="ExternalInvoiceReference2" /> */}
