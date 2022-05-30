@@ -17,7 +17,7 @@ import { fetchUtils } from "react-admin";
 import { loadToken, trySaveToken } from "../utils/TokenUtils";
 
 const fortnoxApiUrl = "https://api.fortnox.se/3";
-const backendApiUrl = "http://localhost:8080";
+const backendApiUrl = "http://localhost:8080/fortnox";
 
 const generateUrl = (url: string, ...params: unknown[]) => {
   const query = stringify({ ...params });
@@ -83,7 +83,7 @@ const get = async (resource: string, params: GetParams) => {
 
   const { id, pagination, sort, filter } = params;
 
-  const url = `${backendApiUrl}/retrieve/${resource}/${id ? id : ""}`;
+  const url = `${backendApiUrl}/${resource}/${id ? id : ""}`;
   const { data } = await axios({
     method: "POST",
     url,

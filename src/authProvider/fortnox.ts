@@ -25,7 +25,7 @@ const authInitUri = "https://apps.fortnox.se/oauth-v1/auth";
 const authTokenUri = "https://apps.fortnox.se/oauth-v1/token";
 const authRevokeUri = "https://apps.fortnox.se/oauth-v1/auth";
 const fortnoxApiUri = "https://api.fortnox.se/3/";
-const apiUrl = "http://localhost:8080";
+const apiUrl = "http://localhost:8080/fortnox";
 
 const FORTNOX_SCOPES = process.env.REACT_APP_FORTNOX_SCOPES;
 const FORTNOX_REDIRECT_URI = process.env.REACT_APP_FORTNOX_REDIRECT_URI;
