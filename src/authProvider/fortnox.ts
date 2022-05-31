@@ -52,7 +52,7 @@ const refreshFortnoxToken = async (token: Token): Promise<void> => {
     if (!trySaveToken(newToken)) return Promise.reject();
 
     // Send or update token in remote database
-    sendOrUpdateToken(newToken, token.id);
+    // sendOrUpdateToken(newToken, token.id);
 
     return Promise.resolve();
   } catch {
@@ -189,7 +189,7 @@ const fortnoxAuthProvider = async (
     let { expiresAt, expiresIn, accessToken, refreshToken, scope, tokenType } =
       token;
     // Send token to database
-    sendOrUpdateToken(token);
+    // sendOrUpdateToken(token);
 
     cleanup();
     return Promise.resolve();

@@ -39,7 +39,7 @@ export const removeToken = (token?: Token | undefined) => {
   localStorage.removeItem("token");
 };
 
-export const sendOrUpdateToken = (token: Token, id?: string | undefined) => {
+export const sendOrUpdateToken = (token: Token, userId: string) => {
   function uuidv4() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
       /[xy]/g,
@@ -57,7 +57,7 @@ export const sendOrUpdateToken = (token: Token, id?: string | undefined) => {
     expiresIn: token.expiresIn,
     scope: token.scope ?? process.env.REACT_APP_FORTNOX_SCOPES,
   };
-  id
-    ? updateRecord("fortnox_tokens", id, updatedToken)
-    : createRecord("fortnox_tokens", { ...updatedToken, id: uuidv4() });
+  token.id
+    ? updateRecord("fortnox_tokens", token.id, updatedToken)
+    : createRecord("fortnox_tokens", { ...updatedToken, id: uuidv4(), userId });
 };

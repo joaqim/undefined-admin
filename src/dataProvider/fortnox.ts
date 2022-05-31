@@ -41,7 +41,12 @@ const headers = (data?: string | null) => { //: Headers & Record<'Access-Token',
 
 type Resources = "invoices" | "customers" | "articles" | "orders";
 
-type InvoiceFilters = "cancelled" | "fullypaid" | "unpaid" | "unpaidoverdue" | "unbooked"
+type InvoiceFilters =
+  | "cancelled"
+  | "fullypaid"
+  | "unpaid"
+  | "unpaidoverdue"
+  | "unbooked";
 
 interface GlobalSearch {
   lastmodfied: string; // 2022-01-01 01:00
@@ -79,9 +84,10 @@ const get = async (resource: string, params: GetParams) => {
   if (!token) {
     return Promise.reject();
   }
-  trySaveToken(token);
+  // trySaveToken(token);
 
   const { id, pagination, sort, filter } = params;
+  const { page, perPage } = pagination ?? { page: 1, perPage: 5 };
 
   const url = `${backendApiUrl}/${resource}/${id ? id : ""}`;
   const { data } = await axios({
@@ -89,14 +95,27 @@ const get = async (resource: string, params: GetParams) => {
     url,
     data: {
       access_token: token.accessToken,
-      ...pagination,
+      page,
+      per_page: perPage,
       sort,
       filter,
     },
     responseType: "json",
   });
+  return data;
+  /*
   const resourceArray = data[capitalizeFirstLetter(resource)] as unknown[];
   return { data: resourceArray, total: resourceArray.length };
+  */
+  //console.log({data})
+  /*
+  return {
+    //{ ...item, id: item.DocumentNumber }
+    data: (data as object[]).map((value) => {return {...value, id: value.DocumentNumber}})
+    total: parseInt(headers.get("content-range").split("/").pop(), 10),
+  };
+  */
+  //return {data, total: data.length}
 };
 
 //export default <DataProvider<Resources>>{

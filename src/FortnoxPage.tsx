@@ -10,6 +10,8 @@ import InvoiceIcon from "@mui/icons-material/Book";
 import ArticleIcon from "@mui/icons-material/Storefront"
 import OrderIcon from "@mui/icons-material/Receipt"
 import CustomerIcon from "@mui/icons-material/Group"
+import { ArticleList } from "./articles/ArticleList";
+import { CustomerList } from "./customers/CustomerList";
 
 export const FortnoxPage = () => (
   <Admin
@@ -19,8 +21,8 @@ export const FortnoxPage = () => (
     /* layout={Layout} */
   >
     <Resource name="invoices" list={InvoiceList} icon={InvoiceIcon} />
-    <Resource name="articles" list={ListGuesser} icon={ArticleIcon} />
+    <Resource name="articles" list={ArticleList} icon={ArticleIcon} />
     <Resource name="orders" list={ListGuesser} icon={OrderIcon} />
-    <Resource name="customers" list={ListGuesser} icon={CustomerIcon}/>
+    <Resource name="customers" list={CustomerList} icon={CustomerIcon}/>
   </Admin>
 );
