@@ -19,6 +19,8 @@ export const FortnoxPage = () => (
     dataProvider={fortnoxDataProvider}
     loginPage={AuthenticateFortnoxPage}
     /* layout={Layout} */
+
+        disableTelemetry
   >
     <Resource name="invoices" list={InvoiceList} icon={InvoiceIcon} />
     <Resource name="articles" list={ArticleList} icon={ArticleIcon} />

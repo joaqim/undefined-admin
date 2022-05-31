@@ -1,9 +1,9 @@
 import { AUTH_CHECK, AUTH_ERROR, AUTH_LOGIN, AUTH_LOGOUT } from "ra-core";
 import { WooCredentials } from "../types";
 import {
-  loadCredentials,
-  removeCredentials,
-  saveCredentials,
+  loadWooCredentials,
+  removeWooCredentials,
+  saveWooCredentials,
 } from "../utils/WooCommerce";
 
 const wooCommerceAuthProvider = async (
@@ -13,22 +13,22 @@ const wooCommerceAuthProvider = async (
   let { credentials } = params;
   if (type === AUTH_LOGIN) {
     if (credentials) {
-      saveCredentials(credentials);
+      saveWooCredentials(credentials);
       return Promise.resolve();
     }
     return Promise.reject();
   } else if (type === AUTH_LOGOUT) {
-    removeCredentials();
+    removeWooCredentials();
   } else if (type === AUTH_ERROR) {
     const status = params.status;
     // Missing credentials or invalid request
     if (status === 401 || status === 403) {
-      removeCredentials();
+      removeWooCredentials();
       return Promise.reject();
     }
     return Promise.resolve();
   } else if (type === AUTH_CHECK) {
-    return loadCredentials() ? Promise.resolve() : Promise.reject();
+    return loadWooCredentials() ? Promise.resolve() : Promise.reject();
   }
 };
 

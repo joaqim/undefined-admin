@@ -8,11 +8,12 @@ import { trySaveToken, sendOrUpdateToken, loadToken } from "./utils/TokenUtils";
 import CurrencyUtils from "./utils/CurrencyUtils";
 import Token from "./Token";
 import {
-  saveCredentials,
-  tryFetchWooCommerceCredentials,
+  saveWooCredentials,
+  tryFetchWooCredentials,
 } from "./utils/WooCommerce";
 import { WooCredentials } from "./types";
 import { FortnoxPage } from "./FortnoxPage";
+import { WooCommercePage } from "./WooCommercePage";
 
 const tryFetchAndValidateToken = async (user: User): Promise<Token> => {
   return query("fortnox_tokens")
@@ -48,6 +49,7 @@ const App = () => {
     };
 
     if (!user) return;
+
     window.addEventListener("new_fortnox_token", function (event) {
       let token = loadToken();
       if(token) {
@@ -58,12 +60,11 @@ const App = () => {
     /*
     if (!isAuthenticatedWoo) {
       setLoading(true);
-      tryFetchWooCommerceCredentials(user).then(
+      tryFetchWooCredentials(user).then(
         (credentials: WooCredentials) => {
           setLoading(false);
           setAuthenticatedWoo(true);
-          saveCredentials(credentials);
-          //login({ credentials });
+          saveWooCredentials(credentials);
         }
       );
     }
@@ -74,11 +75,12 @@ const App = () => {
     setLoading(true);
     tryFetchAndValidateToken(user)
       .then((token) => {
-        setLoading(false);
-        setAuthenticated(true);
-        // sendOrUpdateToken(token);
-        console.log({ token });
-        trySaveToken(token);
+        if(token) {
+          setLoading(false);
+          setAuthenticated(true);
+          // sendOrUpdateToken(token);
+          trySaveToken(token);
+        }
       })
       .catch((reason: any) => {
         console.log(reason);
@@ -93,6 +95,7 @@ const App = () => {
         <Route path="/fortnox" element={<FortnoxPage />} />
       </CustomRoutes> */}
       <FortnoxPage />
+      {/* <WooCommercePage /> */}
       {/* <Admin
         authProvider={wooCommerceAuthProvider}
         dataProvider={wooCommerceDataProvider}

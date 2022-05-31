@@ -5,3 +5,4 @@ static/app.js
 .env
 .env.*
 workspace.code-workspace
+yarn-error.log

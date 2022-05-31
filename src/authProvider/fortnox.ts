@@ -47,9 +47,8 @@ const refreshFortnoxToken = async (token: Token): Promise<void> => {
       token.refreshToken,
       "refresh_token"
     );
-    console.log({ newToken });
     if (!newToken || !newToken.accessToken) throw Error();
-    if (!trySaveToken(newToken)) return Promise.reject();
+    if (!trySaveToken(newToken)) throw Error();
 
     // Send or update token in remote database
     // sendOrUpdateToken(newToken, token.id);
@@ -176,7 +175,6 @@ const fortnoxAuthProvider = async (
 
     // Transform the code to a token via the API
     const token = await fetchFortnoxToken(params.code, "authorization_code");
-    console.log({ token });
     if (!token) {
       cleanup();
       return Promise.reject();

@@ -91,9 +91,9 @@ const get = async (resource: string, params: GetParams) => {
 
   const url = `${backendApiUrl}/${resource}/${id ? id : ""}`;
   const { data } = await axios({
-    method: "POST",
+    method: "GET",
     url,
-    data: {
+    params: {
       access_token: token.accessToken,
       page,
       per_page: perPage,

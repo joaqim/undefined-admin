@@ -1,3 +1,4 @@
+import { DateRangeTwoTone } from "@mui/icons-material";
 import axios from "axios";
 import {
   DataProvider,
@@ -8,38 +9,46 @@ import {
   UpdateManyParams,
   UpdateParams,
 } from "ra-core";
-import { loadCredentials } from "../utils/WooCommerce";
+import { loadWooCredentials } from "../utils/WooCommerce";
 
-type GetParams = Partial<GetListParams & GetOneParams>;
+type GetParams = Partial<GetListParams & GetOneParams> & {
+  dateFrom?: string;
+  dateTo?: string;
+  status?: string;
+};
 
-type Resources = "orders"
+type Resources = "orders" | "refunds";
 
 const get = async (resources: Resources, params: GetParams): Promise<any> => {
-  const credentials = loadCredentials();
+  const credentials = loadWooCredentials();
   if (!credentials) return Promise.reject();
   const { consumerKey, consumerSecret, storefrontUrl } = credentials;
-  if (!consumerKey || !consumerSecret) return Promise.reject();
+  if (!consumerKey || !consumerSecret || !storefrontUrl)
+    return Promise.reject();
+
   const backendApiUrl = "http://localhost:8080";
 
-  const { id, pagination, sort, filter } = params;
+  const { id, pagination, sort, filter, dateFrom, dateTo, status } = params;
 
-  const url = `${backendApiUrl}/retrieve/wc-${resources}/${id ? id : ""}`;
-  const { data } = await axios({
-    method: "POST",
+  const url = `${backendApiUrl}/woo/${resources}/${id ? id : ""}`;
+  return await axios({
+    method: "GET",
     url,
     data: {
       consumer_key: consumerKey,
       consumer_secret: consumerSecret,
       storefront_url: storefrontUrl,
+      status: status ?? "completed",
+      date_from: dateFrom ?? "2021-01-01",
+      date_to: dateTo ?? "2021-01-01",
+      /*
       sort, // {field: string, order: string}
       filter, // {[k: string]: any}
       pagination, // {page: number, perPage: number}
+      */
     },
-    responseType: "json",
+    //responseType: "json",
   });
-
-  console.log({ data });
-  return { data, total: data.length };
 
   /*
   const api = new WooCommerceRestApi({
