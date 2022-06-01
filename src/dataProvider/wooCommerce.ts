@@ -31,10 +31,10 @@ const get = async (resources: Resources, params: GetParams): Promise<any> => {
   const { id, pagination, sort, filter, dateFrom, dateTo, status } = params;
 
   const url = `${backendApiUrl}/woo/${resources}/${id ? id : ""}`;
-  return await axios({
+  const {data} = await axios({
     method: "GET",
     url,
-    data: {
+    params: {
       consumer_key: consumerKey,
       consumer_secret: consumerSecret,
       storefront_url: storefrontUrl,
@@ -49,6 +49,7 @@ const get = async (resources: Resources, params: GetParams): Promise<any> => {
     },
     //responseType: "json",
   });
+  return data;
 
   /*
   const api = new WooCommerceRestApi({
@@ -64,15 +65,15 @@ const get = async (resources: Resources, params: GetParams): Promise<any> => {
 const wooCommerceDataProvider = <DataProvider<string>>{
   getList: async (resource: Resources, params: GetListParams) => {
     try {
-      return get(resource, params);
+      return await get(resource, params);
     } catch {
       return Promise.reject();
     }
   },
-  getOne: (resource: Resources, params: GetOneParams) => {
+  getOne: async (resource: Resources, params: GetOneParams) => {
     console.log("Get one" + params.id);
     try {
-      get(resource, params.id);
+      return await get(resource, params.id);
     } catch {
       return Promise.reject();
     }

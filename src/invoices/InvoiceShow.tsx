@@ -7,7 +7,6 @@ import { Invoice } from "findus"
 
 const InvoiceShow = () => {
   const record = useRecordContext<Invoice>();
-  console.log({ record })
   if (!record) return null;
   return (
     <Card sx={{ width: 600, margin: "auto" }}>

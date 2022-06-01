@@ -57,7 +57,6 @@ const App = () => {
       }
     });
 
-    /*
     if (!isAuthenticatedWoo) {
       setLoading(true);
       tryFetchWooCredentials(user).then(
@@ -68,7 +67,6 @@ const App = () => {
         }
       );
     }
-    */
 
     if (isAuthenticated || localStorage.getItem("token")) return;
 
