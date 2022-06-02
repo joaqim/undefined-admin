@@ -16,11 +16,16 @@ class CompositeDataProvider {
   }
 
   _delegate(name: string, resource: string, params?: any) {
-    const { dataProvider } = this.dataProviders.find((dp) =>
+    const result = this.dataProviders.find((dp) =>
       dp.resources.includes(resource)
     )!;
 
-    return dataProvider[name](resource, params);
+    if (!result)
+      return Promise.reject({
+        error: `Unknown data provider for '${name}' of ${resource}`,
+      });
+
+    return result.dataProvider[name](resource, params);
   }
 
   getList(resource: string, params?: any) {

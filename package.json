@@ -29,7 +29,7 @@
     "@types/node": "^16.11.12",
     "@types/react": "^18.0.9",
     "@types/react-dom": "^18.0.4",
-    "@types/thin-backend": "https://thin.dev/ShowTypescriptDeclarationFile?typescriptDeclarationFileId=6f750767-f454-4462-98a5-08a4d7d718e0&accessToken=VmHjqOLCPcgQhJYOUqhtMcDwKrqplppr",
+    "@types/thin-backend": "https://thin.dev/types/67a4c39f-13a3-452e-98f2-9940b50eea16/cuvTSHlXxySyGoxdLJCNxOzAfoWHzjJb",
     "dotenv": "^10.0.0",
     "esbuild": "^0.13.1"
   }

@@ -9,7 +9,7 @@ import {
   trySaveToken,
   loadToken,
   removeToken,
-  sendOrUpdateToken,
+  trySendOrUpdateToken,
 } from "../utils/TokenUtils";
 import axios from "axios";
 import { isConstructorDeclaration } from "typescript";

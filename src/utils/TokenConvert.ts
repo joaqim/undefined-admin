@@ -200,6 +200,7 @@ const typeMap: any = {
       { json: "consumer_key", js: "consumerKey", typ: union(undefined, "") },
       { json: "consumer_secret", js: "consumerSecret", typ: union(undefined, "") },
       { json: "storefront_url", js: "storefrontUrl", typ: union(undefined, "") },
+      { json: "storefront_prefix", js: "storefrontPrefix", typ: union(undefined, "") },
       { json: "name", js: "name", typ: union(undefined, "") },
 
       // extends Partial<WooCommerceKeys>

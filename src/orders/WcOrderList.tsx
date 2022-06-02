@@ -1,9 +1,14 @@
 import React from 'react';
 import { ArrayField, BooleanField, ChipField, Datagrid, DateField, List, ReferenceField, SingleFieldList, TextField } from 'react-admin';
+import WcOrderShow from './WcOrderShow';
 
 const WcOrderList = () => (
     <List>
-        <Datagrid rowClick="edit">
+        <Datagrid /* rowClick="edit" */
+        rowClick="expand"
+        expand={<WcOrderShow/>}
+        sort={{ field: "date", order: "desc" }}
+        >
             <TextField source="id" />
             <TextField source="billing.first_name" />
             {/* <ReferenceField source="parent_id" reference="parents"><TextField source="id" /></ReferenceField>
@@ -39,7 +44,7 @@ const WcOrderList = () => (
             <ArrayField source="tax_lines"><SingleFieldList><ChipField source="id" /></SingleFieldList></ArrayField>
             <ArrayField source="shipping_lines"><SingleFieldList><ChipField source="id" /></SingleFieldList></ArrayField>
             <TextField source="fee_lines" />
-            <TextField source="coupon_lines" />
+           {/*  <TextField source="coupon_lines" /> */}
             <TextField source="refunds" />
            {/*  <TextField source="payment_url" />
             <DateField source="date_created_gmt" />

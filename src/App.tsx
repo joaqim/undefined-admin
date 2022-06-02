@@ -4,7 +4,7 @@ import { query, initThinBackend, User, FortnoxToken } from "thin-backend";
 import { useCurrentUser, ThinBackend } from "thin-backend/react";
 import AppNavbar from "./AppNavbar";
 import fortnoxAuthProvider from "./authProvider/fortnox";
-import { trySaveToken, sendOrUpdateToken, loadToken } from "./utils/TokenUtils";
+import { trySaveToken, trySendOrUpdateToken, loadToken } from "./utils/TokenUtils";
 import CurrencyUtils from "./utils/CurrencyUtils";
 import Token from "./Token";
 import {
@@ -53,7 +53,7 @@ const App = () => {
     window.addEventListener("new_fortnox_token", function (event) {
       let token = loadToken();
       if(token) {
-        sendOrUpdateToken(token, user.id);
+        trySendOrUpdateToken(token, user.id);
       }
     });
 

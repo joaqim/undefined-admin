@@ -1,4 +1,9 @@
-import { deleteRecord, updateRecord, createRecord } from "thin-backend";
+import {
+  deleteRecord,
+  updateRecord,
+  createRecord,
+  FortnoxToken,
+} from "thin-backend";
 import Token from "../Token";
 import { TokenConvert } from "./TokenConvert";
 
@@ -39,7 +44,8 @@ export const removeToken = (token?: Token | undefined) => {
   localStorage.removeItem("token");
 };
 
-export const sendOrUpdateToken = (token: Token, userId: string) => {
+export const trySendOrUpdateToken = (token: Token, userId: string) => {
+  if (!userId) return;
   function uuidv4() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
       /[xy]/g,
@@ -50,14 +56,27 @@ export const sendOrUpdateToken = (token: Token, userId: string) => {
       }
     );
   }
-  let updatedToken = {
-    accessToken: token.accessToken,
-    refreshToken: token.refreshToken,
-    expiresAt: token.expiresAt,
-    expiresIn: token.expiresIn,
-    scope: token.scope ?? process.env.REACT_APP_FORTNOX_SCOPES,
+  let updatedToken: Partial<FortnoxToken> & {
+    expiresAt: string | null;
+    expiresIn: number | null;
+  } = {
+    tokenType: "Bearer",
+    accessToken: token.accessToken ?? null,
+    refreshToken: token.refreshToken ?? null,
+    expiresAt: token.expiresAt ?? null,
+    expiresIn: token.expiresIn ?? null,
+    scope: token.scope ?? process.env.REACT_APP_FORTNOX_SCOPES!,
   };
-  token.id
-    ? updateRecord("fortnox_tokens", token.id, updatedToken)
-    : createRecord("fortnox_tokens", { ...updatedToken, id: uuidv4(), userId });
+
+  try {
+    token.id
+      ? updateRecord("fortnox_tokens", token.id, updatedToken)
+      : createRecord("fortnox_tokens", {
+          ...updatedToken,
+          id: uuidv4(),
+          userId: userId!,
+        });
+  } catch (error) {
+    console.log("Failed to update DB record: Fortnox Token, " + error);
+  }
 };
