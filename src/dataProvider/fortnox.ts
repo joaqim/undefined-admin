@@ -1,27 +1,28 @@
-import axios from "axios";
-import { stringify } from "query-string";
+import axios from 'axios';
+import { stringify } from 'query-string';
 import type {
-  CreateParams,
-  DataProvider,
-  DeleteManyParams,
-  DeleteParams,
-  GetListParams,
-  GetManyParams,
-  GetManyReferenceParams,
-  GetOneParams,
-  Options,
-  UpdateManyParams,
-  UpdateParams,
-} from "ra-core";
-import { fetchUtils } from "react-admin";
-import { loadToken, trySaveToken } from "../utils/TokenUtils";
+    CreateParams,
+    DataProvider,
+    DeleteManyParams,
+    DeleteParams,
+    GetListParams,
+    GetManyParams,
+    GetManyReferenceParams,
+    GetOneParams,
+    Options,
+    UpdateManyParams,
+    UpdateParams,
+} from 'ra-core';
+import { fetchUtils } from 'react-admin';
+import fetchJson from '../common/fetchJson';
+import { loadToken, trySaveToken } from '../utils/TokenUtils';
 
-const fortnoxApiUrl = "https://api.fortnox.se/3";
-const backendApiUrl = "http://localhost:8080/fortnox";
+const fortnoxApiUrl = 'https://api.fortnox.se/3';
+const backendApiUrl = 'http://localhost:8080/fortnox';
 
 const generateUrl = (url: string, ...params: unknown[]) => {
-  const query = stringify({ ...params });
-  return `${url}?${query}`;
+    const query = stringify({ ...params });
+    return `${url}?${query}`;
 };
 
 /*
@@ -39,62 +40,50 @@ const headers = (data?: string | null) => { //: Headers & Record<'Access-Token',
     )
 }*/
 
-type Resources = "invoices" | "customers" | "articles" | "orders";
+type Resources = 'invoices' | 'customers' | 'articles' | 'orders';
 
 type InvoiceFilters =
-  | "cancelled"
-  | "fullypaid"
-  | "unpaid"
-  | "unpaidoverdue"
-  | "unbooked";
+    | 'cancelled'
+    | 'fullypaid'
+    | 'unpaid'
+    | 'unpaidoverdue'
+    | 'unbooked';
 
 interface GlobalSearch {
-  lastmodfied: string; // 2022-01-01 01:00
-  financialyear: string; // 1
-  financialyeardate: string; // 2022-03-06
+    lastmodfied: string; // 2022-01-01 01:00
+    financialyear: string; // 1
+    financialyeardate: string; // 2022-03-06
 
-  // Only for Invoices and Orders:
-  fromdate: string; // 2022-03-06
-  toDate: string; // 2022-03-06
+    // Only for Invoices and Orders:
+    fromdate: string; // 2022-03-06
+    toDate: string; // 2022-03-06
 }
-
-//const httpClient = fetchUtils.fetchJson;
-
-const httpClient = (url: string, options?: { headers?: Headers }) => {
-  if (!options) {
-    options = {};
-  }
-  if (!options.headers) {
-    options.headers = new Headers({ Accept: "application/json" });
-  }
-  // add your own headers here
-  options.headers.set("Access-Control-Expose-Headers", "Content-Range");
-  return fetchUtils.fetchJson(url, options);
-};
 
 // TODO: Switch to using capitalized 'resources' string
 const capitalizeFirstLetter = (str: string): string => {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+    return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
 type GetParams = Partial<GetListParams & GetOneParams>;
 
 const get = async (resource: string, params: GetParams) => {
-  const token = loadToken();
-  if (!token) {
-    return Promise.reject();
-  }
-  // trySaveToken(token);
+    const token = loadToken();
+    if (!token) {
+        return Promise.reject();
+    }
+    return Promise.resolve({ data: Array.from({ length: 0 }), total: 0 });
+    // trySaveToken(token);
 
-  const { id, pagination, sort, filter } = params;
-  const { page, perPage } = pagination ?? { page: 1, perPage: 5 };
+    const { id, pagination, sort, filter } = params;
+    const { page, perPage } = pagination ?? { page: 1, perPage: 5 };
 
-  const url = `${backendApiUrl}/${resource}/${id ? id : ""}`;
+    const url = `${backendApiUrl}/${resource}/${id ? id : ''}`;
+    /*
   const { data } = await axios({
     method: "GET",
     url,
     params: {
-      access_token: token.accessToken,
+      access_token: token.access_token,
       page,
       per_page: perPage,
       sort,
@@ -102,60 +91,66 @@ const get = async (resource: string, params: GetParams) => {
     },
     responseType: "json",
   });
-  return data;
-  /*
+  */
+
+    const { json } = await fetchJson(url, {
+        method: 'POST',
+        body: {
+            token,
+            access_token: token.access_token,
+            page: page.toString(),
+            perPage: perPage.toString(),
+            // sort,
+            filter,
+        },
+    });
+    /* console.log({ json }); */
+    return json;
+    /*
   const resourceArray = data[capitalizeFirstLetter(resource)] as unknown[];
   return { data: resourceArray, total: resourceArray.length };
   */
-  //console.log({data})
-  /*
+    //console.log({data})
+    /*
   return {
     //{ ...item, id: item.DocumentNumber }
     data: (data as object[]).map((value) => {return {...value, id: value.DocumentNumber}})
     total: parseInt(headers.get("content-range").split("/").pop(), 10),
   };
   */
-  //return {data, total: data.length}
+    //return {data, total: data.length}
 };
 
 //export default <DataProvider<Resources>>{
 const fortnoxDataProvider = <DataProvider<string>>{
-  getList: async (resource: string, params: GetListParams) => {
-    return get(resource, params);
-  },
-  getOne: (resource: string, params: GetOneParams) => {
-    return get(resource, params);
-    return Promise.reject();
-    return httpClient(`${fortnoxApiUrl}/${resource}/${params.id}`).then(
-      ({ json }: { json: string }) => ({ data: json })
-    );
-  },
-  getMany: (resource: string, params: GetManyParams) => {
-    return Promise.reject();
-    const url = generateUrl(`${fortnoxApiUrl}/${resource}`, params);
-    return httpClient(url).then(({ json }: { json: string }) => ({
-      data: json,
-    }));
-  },
-  getManyReference: (resource: string, params: GetManyReferenceParams) => {
-    return Promise.reject();
-    /*
+    getList: async (resource: string, params: GetListParams) => {
+        return get(resource, params);
+    },
+    getOne: (resource: string, params: GetOneParams) => {
+        return get(resource, params);
+    },
+    getMany: (resource: string, params: GetManyParams) => {
+        return Promise.reject();
+    },
+    getManyReference: (resource: string, params: GetManyReferenceParams) => {
+        return Promise.reject();
+        /*
         return httpClient('').then(({ headers, json }: { headers: Map<string, string>, json: string }) => ({
             data: json, total: parseInt(
                 headers.get('content-range')?.split('/')!.pop()!
                 , 10)
         }));
         */
-  },
-  update: (resource: string, params: UpdateParams) => {
-    return Promise.reject();
-    /*
+    },
+    update: (resource: string, params: UpdateParams) => {
+        return Promise.reject();
+        /*
         return httpClient(`${fortnoxApiUrl}/${resource}/${params.id}`, { method: 'PUT', body: JSON.stringify(params.data) }).then(({ json }: { json: string }) => ({ data: json }))
         */
-  },
-  updateMany: (resource: string, params: UpdateManyParams) => {
-    return Promise.reject();
-    /*
+    },
+    updateMany: (resource: string, params: UpdateManyParams) => {
+        return Promise.reject();
+        /*
         const query = {
             filter: JSON.stringify({ id: params.ids })
         }
@@ -165,10 +160,10 @@ const fortnoxDataProvider = <DataProvider<string>>{
                 body: JSON.stringify(params.data),
             }).then(({ json }: { json: string }) => ({ data: { ...params.data, id: json.id } }))
             */
-  },
-  create: (resource: string, params: CreateParams) => {
-    return Promise.reject();
-    /*
+    },
+    create: (resource: string, params: CreateParams) => {
+        return Promise.reject();
+        /*
         return httpClient(`${fortnoxApiUrl}/${resource}`, {
             method: 'POST',
             body: JSON.stringify(params.data),
@@ -176,19 +171,19 @@ const fortnoxDataProvider = <DataProvider<string>>{
             data: { ...params.data, id: json.id },
         }))
         */
-  },
-  delete: (resource: string, params: DeleteParams) => {
-    return Promise.reject();
-    /*
+    },
+    delete: (resource: string, params: DeleteParams) => {
+        return Promise.reject();
+        /*
         return httpClient(`${fortnoxApiUrl}/${resource}/${params.id}`, {
             method: 'DELETE',
         }).then(({ json }: { json: string }) => ({ data: json }))
         */
-  },
+    },
 
-  deleteMany: (resource: string, params: DeleteManyParams) => {
-    return Promise.reject();
-    /*
+    deleteMany: (resource: string, params: DeleteManyParams) => {
+        return Promise.reject();
+        /*
         const query = {
             filter: JSON.stringify({ id: params.ids }),
         };
@@ -196,7 +191,7 @@ const fortnoxDataProvider = <DataProvider<string>>{
             method: 'DELETE',
         }).then(({ json }: { json: string }) => ({ data: json }));
         */
-  },
+    },
 };
 
 export default fortnoxDataProvider;
