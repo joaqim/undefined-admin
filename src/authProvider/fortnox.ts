@@ -44,18 +44,14 @@ const refreshFortnoxToken = async (token: any): Promise<void> => {
             'refresh_token'
         );
         if (!newToken || !newToken.access_token) throw Error();
-        if (!trySaveToken(newToken)) throw Error();
-
-        // Send or update token in remote database
-        // sendOrUpdateToken(newToken, token.id);
+        if (!trySaveToken(newToken)) throw Error('Failed to save new Token');
 
         return Promise.resolve();
-    } catch {
-        console.log(
-            `Failed to refresh token with 'refresh_token': ${token.refresh_token}`
-        );
+    } catch (error) {
+        const message = `Failed to refresh token with 'refresh_token': ${token.refresh_token} - ${error}`;
+        console.log(message);
         removeToken();
-        return Promise.reject();
+        return Promise.reject({ message });
     }
 };
 
@@ -83,7 +79,7 @@ const fetchFortnoxToken = async (
         scopes: FORTNOX_SCOPES,
     };
 
-    if (grant_type == 'refresh_token') {
+    if (grant_type === 'refresh_token') {
         body.refresh_token = code;
     } else {
         body.code = code;

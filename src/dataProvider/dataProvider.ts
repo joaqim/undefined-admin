@@ -39,16 +39,16 @@ const generateUrl = (
         }
         return `${apiUrl}/${resource}/${params.ids[0].toString()}`;
     }
-    let query = {};
-
     const { page, perPage } = params.pagination;
     const { field, order } = params.sort;
-    query = {
-        sort: JSON.stringify([field, order]),
-        range: JSON.stringify([(page - 1) * perPage, page * perPage - 1]),
+    const queryParams = new URLSearchParams({
+        //sort: JSON.stringify([field, order]),
+        //range: JSON.stringify([(page - 1) * perPage, page * perPage - 1]),
         filter: JSON.stringify(params.filter),
-    };
-    return `${apiUrl}/${resource}?${JSON.stringify(query)}`;
+        page: page.toString(),
+        perPage: perPage.toString(),
+    });
+    return `${apiUrl}/${resource}?${queryParams.toString()}`;
 };
 const getHeaderTotal = (headers: Headers) => {
     const total = headers.get('Content-Range')?.split('/').pop();

@@ -17,13 +17,14 @@ import {
 import {
     Article,
     Customer,
+    Expense,
     Invoice,
     InvoiceRow,
     WcOrder,
     WcOrderMetaData,
     WcOrders,
 } from 'findus';
-import { useRecordContext } from 'react-admin';
+import { SimpleListLoadingClasses, useRecordContext } from 'react-admin';
 import * as Findus from 'findus';
 import CurrencyUtils from '../utils/CurrencyUtils';
 import { AppRegistrationOutlined } from '@mui/icons-material';
@@ -31,19 +32,28 @@ import Axios from 'axios';
 import { loadToken } from '../utils/TokenUtils';
 import { fetchUtils } from 'ra-core';
 import fetchJson from '../common/fetchJson';
+import FortnoxUtils from '../utils/FortnoxUtils';
 
 const WcOrderShow = () => {
     const order: WcOrder = useRecordContext<WcOrder>();
-    const [currencyRate, setCurrencyRate] = useState<number | undefined>();
+
+    if (WcOrders.hasInvoiceReference(order)) {
+        return <Typography>Order has been added to Fortnox.</Typography>;
+    }
+
+    const [currencyRate, setCurrencyRate] = useState<number | undefined>(-1);
     const [invoice, setInvoice] = useState<Invoice | null>(null);
     const [pdf, setPdf] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    const [loading, setLoading] = useState(false);
 
     if (!order) return null;
 
     //const [pdf, setPdf] = useState<string | null>();
 
     useEffect(() => {
+        if (loading) return;
         /*
     const fetch = async () => {
       const url = Findus.WcOrders.tryGetDocumentLink(order);
@@ -53,22 +63,18 @@ const WcOrderShow = () => {
     fetch();
     */
 
-        if (invoice) {
-            try {
-                const customer = Findus.Customers.tryCreateCustomer(invoice);
-            } catch (error) {
-                console.log({ error });
-            }
-            return;
-        }
-
         const fetchCurrency = async () => {
+            setLoading(true);
             CurrencyUtils.fetchCurrencyRate(
                 new Date(order.date_paid),
                 order.currency
-            ).then((currencyRate) => {
-                setCurrencyRate(currencyRate);
-            });
+            )
+                .then((currencyRate) => {
+                    setCurrencyRate(currencyRate);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
         };
 
         try {
@@ -81,13 +87,21 @@ const WcOrderShow = () => {
                 );
             }
 
-            if (!currencyRate) {
+            if (currencyRate === -1) {
                 try {
-                    setCurrencyRate(Findus.WcOrders.tryGetCurrencyRate(order));
+                    let paymentMethod =
+                        Findus.WcOrders.tryGetPaymentMethod(order);
+                    if (paymentMethod === 'Stripe') {
+                        setCurrencyRate(
+                            Findus.WcOrders.tryGetCurrencyRate(order)
+                        );
+                    } else {
+                        fetchCurrency();
+                    }
                 } catch {
                     fetchCurrency();
-                    return;
                 }
+                return;
             }
 
             /*
@@ -108,7 +122,17 @@ const WcOrderShow = () => {
             }
             */
 
-            setInvoice(Findus.Invoices.tryCreateInvoice(order, currencyRate));
+            const timezoneOffset = new Date(
+                order.date_completed!
+            ).getTimezoneOffset();
+
+            setInvoice(
+                Findus.Invoices.tryCreateInvoice(
+                    order,
+                    currencyRate
+                    /* timezoneOffset */
+                )
+            );
         } catch (findusError) {
             const message =
                 typeof findusError === 'string'
@@ -116,7 +140,11 @@ const WcOrderShow = () => {
                     : (findusError as Error).message;
             setError(`Failed to create Invoice - ${message}`);
         }
-    }, [currencyRate, invoice]);
+    }, [currencyRate, loading]);
+
+    if (loading) {
+        <Typography>Loading Currency...</Typography>;
+    }
 
     // invoice = Findus.Invoices.tryCreateInvoice(order, 1.04);
     // pdf = Findus.WcOrders.tryGetDocumentLink(order)
@@ -124,57 +152,6 @@ const WcOrderShow = () => {
 
     return InvoiceField({ invoice, error, pdf, order, currencyRate });
 };
-const apiUrl = 'http://localhost:8080';
-
-const httpClient = (
-    url: string,
-    options?: {
-        headers?: Headers;
-        method?: 'POST' | 'GET' | 'PUSH';
-        body?: string;
-    }
-) => {
-    if (!options) {
-        options = {};
-    }
-    if (!options.headers) {
-        options.headers = new Headers({ Accept: 'application/json' });
-    }
-    const { accessToken } = JSON.parse(localStorage.getItem('auth') as string);
-    options.headers.set('Authorization', `Bearer ${accessToken}`);
-    // add your own headers here
-    options.headers.set('Access-Control-Expose-Headers', 'Content-Range');
-    return fetchUtils.fetchJson(url, options);
-};
-
-const createResource = async (
-    resources: 'articles' | 'customers' | 'invoices',
-    data: Record<string, Article | Customer | Invoice>
-) => {
-    const token = loadToken();
-    if (!token) return;
-    const response = await fetchJson(`${apiUrl}/fortnox/${resources}`, {
-        method: 'POST',
-        body: JSON.stringify({ data, access_token: token.access_token }),
-    }).catch((reason) => {
-        console.log({ reason });
-    });
-
-    console.log({ response });
-    return response;
-};
-const createArticle = async (article: Article) => {
-    await createResource('articles', { Article: article });
-};
-const createCustomer = async (customer: Customer) => {
-    await createResource('customers', { Customer: customer });
-};
-
-/*
-const createCustomer = async (customer: Customer) => {
-    const { data } = await sendResource('Customers', customer);
-};
-*/
 
 const InvoiceField = (content: {
     invoice: Invoice | null;
@@ -183,9 +160,11 @@ const InvoiceField = (content: {
     order: WcOrder;
     currencyRate: number | undefined;
 }) => {
+    const [customerNumber, setCustomerNumber] = useState<string | undefined>();
+
     let { invoice, pdf, order, currencyRate } = content;
     let error: string | null = content.error;
-    if (!invoice && (!error || error === '')) {
+    /* if (!invoice && (!error || error === '')) {
         try {
             invoice = Findus.Invoices.tryCreateInvoice(order, currencyRate);
         } catch (findusError) {
@@ -197,11 +176,10 @@ const InvoiceField = (content: {
                 error = message;
             } else {
                 error = message ?? 'Missing error message';
-                if (!content.currencyRate)
-                    error += ' Also missing Currency Rate.';
+                if (!content.currencyRate) error += '\nMissing Currency Rate.';
             }
         }
-    }
+    } */
 
     const calculateVAT = (price: number, priceWithVAT: number): number => {
         if (price === priceWithVAT) return 0;
@@ -210,10 +188,18 @@ const InvoiceField = (content: {
 
     let customer: Customer | undefined;
     try {
-        customer = Findus.Customers.tryCreateCustomer(invoice as Invoice);
+        customer = Findus.Customers.tryCreateCustomer(order);
     } catch (error) {
         error = (error as Error).message;
     }
+
+    const paymentMethod: string | undefined =
+        WcOrders.tryGetPaymentMethod(order);
+
+    const expense: Expense | undefined =
+        paymentMethod && WcOrders.hasPaymentFee(order, paymentMethod)
+            ? WcOrders.tryCreatePaymentFeeExpense(order)
+            : undefined;
 
     return (
         <TableContainer component={Paper}>
@@ -251,26 +237,6 @@ const InvoiceField = (content: {
                                     </TableRow>
                                 </TableBody>
                             </Table>
-                            {customer && (
-                                <Button
-                                    onClick={async () =>
-                                        await createCustomer(
-                                            customer as Customer
-                                        )
-                                    }
-                                >
-                                    Create Customer
-                                </Button>
-                            )}
-                            {!error && (
-                                <Button
-                                    onClick={() => {
-                                        console.log(JSON.stringify(order));
-                                    }}
-                                >
-                                    Print JSON
-                                </Button>
-                            )}
                         </Grid>
                         <Grid item>
                             <Table sx={{ maxWidth: 150 }} size="small">
@@ -315,53 +281,15 @@ const InvoiceField = (content: {
                                                 </TableCell>
                                                 <TableCell align="right">
                                                     {row.VAT
-                                                        ? (
-                                                              row.VAT * 100
-                                                          ).toFixed(2)
+                                                        ? row.VAT.toFixed(2)
                                                         : 0}
                                                 </TableCell>
                                                 <TableCell align="right">
                                                     {row.AccountNumber}
                                                 </TableCell>
-                                                <TableCell
-                                                    component="th"
-                                                    scope="row"
-                                                >
-                                                    <Button
-                                                        onClick={() =>
-                                                            createArticle({
-                                                                ArticleNumber:
-                                                                    row.ArticleNumber +
-                                                                    `.Test.${0}`,
-                                                                Description:
-                                                                    'Test - Delete Me',
-                                                            })
-                                                        }
-                                                    >
-                                                        Create Article
-                                                    </Button>
-                                                </TableCell>
                                             </TableRow>
                                         )
                                     )}
-                                </TableBody>
-                            </Table>
-                        </Grid>
-                        <Grid item>
-                            <Table sx={{ maxWidth: 150 }} size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>
-                                            Total Shipping Cost
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    <TableRow>
-                                        <TableCell component="th" scope="row">
-                                            {invoice.Freight}
-                                        </TableCell>
-                                    </TableRow>
                                 </TableBody>
                             </Table>
                         </Grid>

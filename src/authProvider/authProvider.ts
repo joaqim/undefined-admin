@@ -20,8 +20,9 @@ const authProvider: AuthProvider = {
             .then((auth) => {
                 localStorage.setItem('auth', JSON.stringify(auth));
             })
-            .catch(() => {
-                throw new Error('Network error');
+            .catch((reason) => {
+                console.log({ reason });
+                throw new Error(`Network error - ${reason}`);
             });
     },
     logout: () => {

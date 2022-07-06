@@ -14,6 +14,7 @@ import { CredentialsList } from './components/CredentialsList';
 import WcOrderList from './orders/WcOrderList';
 import FortnoxAuthPage from './pages/FortnoxAuthPage';
 import { FortnoxPage } from './FortnoxPage';
+import UtilityPage from './pages/UtilityPage';
 
 const MainPage = () => {
     const queryClient = new QueryClient({
@@ -42,6 +43,9 @@ const MainPage = () => {
                 create={CredentialsForm}
             />
             <Resource name="orders" list={WcOrderList} />
+            <CustomRoutes>
+                <Route path="/util" element={<UtilityPage />} />
+            </CustomRoutes>
         </Admin>
     );
 };
