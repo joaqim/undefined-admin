@@ -11,6 +11,7 @@ import {
     Box,
     Button,
 } from '@mui/material';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import {
     Check,
     CheckBox,
@@ -33,7 +34,12 @@ import {
 import type { WcOrder } from 'findus';
 import React, { useEffect, useState } from 'react';
 import dataProvider from '../dataProvider/dataProvider';
-import { Typography } from '@material-ui/core';
+import {
+    InputLabel,
+    NativeSelect,
+    TextField,
+    Typography,
+} from '@material-ui/core';
 import { collapseTextChangeRangesAcrossMultipleVersions } from 'typescript';
 import CurrencyUtils from '../utils/CurrencyUtils';
 import tryFetchPDF from '../utils/tryFetchPDF';
@@ -42,6 +48,8 @@ import fetchJson from '../common/fetchJson';
 import { loadToken } from '../utils/TokenUtils';
 import { SimpleListLoadingClasses, StringMap } from 'react-admin';
 import { isArray } from 'util';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import svLocale from 'date-fns/locale/sv';
 
 const VerificationTableHeadCells = () => (
     <>
@@ -366,16 +374,22 @@ const UtilityPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | undefined>();
 
+    const [fromDate, setFromDate] = useState('2022-03-01');
+    const [toDate, setToDate] = useState('2022-03-01');
+    const [provider, setProvider] = useState<string | undefined>();
+    const [status, setStatus] = useState<'completed' | 'refunded'>('completed');
+
     useEffect(() => {
-        if (loading || orders || error) return;
+        if (loading || error) return;
         setLoading(true);
         dataProvider
             .getList('orders', {
                 pagination: { page: 1, perPage: 100 },
                 sort: { field: 'date_completed', order: 'ASC' },
                 filter: {
-                    date_completed: { '<': '2022-03-01', '>': '2022-03-01' },
-                    /* storefront_prefix: 'GB', */
+                    date_completed: { '<': fromDate, '>': toDate },
+                    storefront_prefix: provider,
+                    status,
                 },
             })
             .then(({ data }) => {
@@ -389,7 +403,7 @@ const UtilityPage = () => {
             .finally(() => {
                 setLoading(false);
             });
-    }, []);
+    }, [fromDate, toDate, provider, status]);
 
     if (error) {
         return <div>Failed to load orders: {error}</div>;
@@ -420,6 +434,71 @@ const UtilityPage = () => {
     return (
         <>
             <Button onClick={() => uploadAll()}>Upload All</Button>
+            <LocalizationProvider
+                dateAdapter={AdapterDateFns}
+                adapterLocale={svLocale}
+            >
+                {/* <DatePicker
+                    label="Older than"
+                    value={fromDate}
+                    onChange={(newValue) => {
+                        if (newValue) setFromDate(newValue);
+                    }}
+                    renderInput={(params) => <TextField {...params} />}
+                />
+                <DatePicker
+                    label="Newer than"
+                    value={toDate}
+                    onChange={(newValue) => {
+                        if (newValue) setToDate(newValue);
+                    }}
+                    renderInput={(params) => <TextField {...params} />}
+                /> */}
+                <DatePicker
+                    label="Date"
+                    value={fromDate}
+                    onChange={(newValue) => {
+                        if (newValue) {
+                            setToDate(newValue);
+                            setFromDate(newValue);
+                        }
+                    }}
+                    renderInput={(params) => <TextField {...params} />}
+                />
+                <InputLabel variant="standard" htmlFor="uncontrolled-native">
+                    Store frontend
+                </InputLabel>
+                <NativeSelect
+                    defaultValue={provider}
+                    onChange={(event) => {
+                        setProvider(event.target.value);
+                    }}
+                    inputProps={{
+                        name: 'provider',
+                        id: 'uncontrolled-native',
+                    }}
+                >
+                    <option value={'ALL'}>All</option>
+                    <option value={'ND'}>Naudrinks</option>
+                    <option value={'GB'}>GamerBulk</option>
+                </NativeSelect>
+                <InputLabel variant="standard" htmlFor="uncontrolled-native">
+                    Order Status
+                </InputLabel>
+                <NativeSelect
+                    defaultValue={status}
+                    onChange={(event) => {
+                        setStatus(event.target.value);
+                    }}
+                    inputProps={{
+                        name: 'orderStatus',
+                        id: 'uncontrolled-native',
+                    }}
+                >
+                    <option value={'completed'}>Completed</option>
+                    <option value={'refunded'}>Refunded</option>
+                </NativeSelect>
+            </LocalizationProvider>
             <TableContainer component={Paper} sx={{ paddingTop: '10vh' }}>
                 <Grid container rowSpacing={6}>
                     <Grid item>
