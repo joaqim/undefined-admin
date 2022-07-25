@@ -87,7 +87,7 @@ const WcOrderShow = () => {
                 );
             }
 
-            if (currencyRate === -1) {
+            if (currencyRate === -1 || !currencyRate) {
                 try {
                     let paymentMethod =
                         Findus.WcOrders.tryGetPaymentMethod(order);
@@ -133,6 +133,8 @@ const WcOrderShow = () => {
                     /* timezoneOffset */
                 )
             );
+
+            WcOrders.tryGetAccurateTotal(order);
         } catch (findusError) {
             const message =
                 typeof findusError === 'string'
@@ -195,11 +197,6 @@ const InvoiceField = (content: {
 
     const paymentMethod: string | undefined =
         WcOrders.tryGetPaymentMethod(order);
-
-    const expense: Expense | undefined =
-        paymentMethod && WcOrders.hasPaymentFee(order, paymentMethod)
-            ? WcOrders.tryCreatePaymentFeeExpense(order)
-            : undefined;
 
     return (
         <TableContainer component={Paper}>
@@ -274,7 +271,7 @@ const InvoiceField = (content: {
                                                     {row.ArticleNumber}
                                                 </TableCell>
                                                 <TableCell align="right">
-                                                    {row.Price.toFixed(2)}
+                                                    {row.Price}
                                                 </TableCell>
                                                 <TableCell align="right">
                                                     {row.DeliveredQuantity}

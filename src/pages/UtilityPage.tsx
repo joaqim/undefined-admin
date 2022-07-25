@@ -29,7 +29,7 @@ import {
     Invoice,
     Expense,
     Articles,
-    SupplierInvoices,
+    Vouchers,
 } from 'findus';
 import type { WcOrder } from 'findus';
 import React, { useEffect, useState } from 'react';
@@ -114,13 +114,25 @@ const ConditionalSuccess = (props: {
             <>
                 {props.error && <Typography>{props.error}</Typography>}
                 {props.order && (
-                    <Button
-                        onClick={() => {
-                            console.log(JSON.stringify(props.order));
-                        }}
-                    >
-                        Print JSON
-                    </Button>
+                    <>
+                        <Button
+                            onClick={() => {
+                                console.log(JSON.stringify(props.order));
+                            }}
+                        >
+                            Print JSON
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                const invoice = Invoices.tryCreateInvoice(
+                                    props.order as WcOrder
+                                );
+                                console.log(JSON.stringify(invoice));
+                            }}
+                        >
+                            Print Invoice
+                        </Button>
+                    </>
                 )}
             </>
         );
@@ -135,16 +147,31 @@ const tryUpload = async (order: WcOrder): Promise<Invoice | undefined> => {
             paymentMethod = WcOrders.tryGetPaymentMethod(order);
         } catch {}
 
+        let accurateTotal: number | undefined;
+        let warning: string | undefined;
+        try {
+            accurateTotal = WcOrders.tryGetAccurateTotal(order);
+        } catch (reason) {
+            const message = formatError(reason);
+            if (message.includes('Critical Error')) {
+                throw new Error(message);
+            }
+            warning = message;
+            accurateTotal = parseFloat(order.total);
+        }
+
         const currency = WcOrders.tryGetCurrency(order);
+
         let currencyRate: number | undefined;
         if (paymentMethod !== 'Stripe') {
             currencyRate = await CurrencyUtils.fetchCurrencyRate(
                 new Date(order.date_paid),
-                order.currency
+                currency
             );
         } else {
-            currencyRate = WcOrders.tryGetCurrencyRate(order);
+            currencyRate = WcOrders.tryGetCurrencyRate(order, accurateTotal);
         }
+        /*
         const supplierInvoice = SupplierInvoices.tryCreatePaymentFeeInvoice(
             order,
             currencyRate
@@ -154,6 +181,7 @@ const tryUpload = async (order: WcOrder): Promise<Invoice | undefined> => {
                 `Missing expected Supplier Invoice for Payment Fee ${paymentMethod}`
             );
         }
+        */
 
         const invoice = Invoices.tryCreateInvoice(order, currencyRate);
 
@@ -173,17 +201,28 @@ const tryUpload = async (order: WcOrder): Promise<Invoice | undefined> => {
         for (const article of articles) {
             await FortnoxUtils.createArticle(article);
         }
+
+        const voucher = Vouchers.tryCreateVoucherForPaymentFee(
+            order,
+            currencyRate
+        );
+
         const documentLink = WcOrders.tryGetDocumentLink(order);
+        /*
         const uploadedInvoice = await FortnoxUtils.createInvoice(
             invoice,
             customerNumber,
             [expense],
-            documentLink,
+            undefined, //documentLink,
             order.order_key,
-            supplierInvoice
+            undefined, // supplierInvoice
+            voucher,
+            warning
         );
+        */
 
-        return Promise.resolve(uploadedInvoice);
+        //return Promise.resolve(uploadedInvoice);
+        return Promise.resolve({ Invoice: invoice });
     } catch (message) {
         const error = formatError(message);
         if (
@@ -267,7 +306,20 @@ const OrderView = (props: { order: WcOrder; brief?: boolean }) => {
         if (!loading) {
             if (!currencyRate) {
                 try {
-                    setCurrencyRate(WcOrders.tryGetCurrencyRate(order));
+                    let accurateTotal: number | undefined;
+                    try {
+                        accurateTotal = WcOrders.tryGetAccurateTotal(order);
+                    } catch (reason) {
+                        console.log(
+                            order.id +
+                                ' ' +
+                                formatError(reason).substring(0, 23) +
+                                '...'
+                        );
+                    }
+                    setCurrencyRate(
+                        WcOrders.tryGetCurrencyRate(order, accurateTotal)
+                    );
                 } catch {
                     fetchCurrency();
                     return;
@@ -280,17 +332,9 @@ const OrderView = (props: { order: WcOrder; brief?: boolean }) => {
                 const inv = Invoices.tryCreateInvoice(order, currencyRate);
                 setInvoice(inv);
                 setCustomer(Customers.tryCreateCustomer(order));
-                const expense = FortnoxUtils.tryCreateExpense(order);
                 setExpense(expense);
                 setUploaded(WcOrders.getInvoiceReference(order) !== undefined);
-                setVcs(
-                    Verification.tryCreateVerification(
-                        inv,
-                        order,
-                        true,
-                        expense
-                    )
-                );
+                setVcs(Verification.tryCreateVerification(inv, order, true));
                 WcOrders.tryGetDocumentLink(order);
             } catch (message) {
                 setError(formatError(message));
@@ -324,7 +368,10 @@ const OrderView = (props: { order: WcOrder; brief?: boolean }) => {
                     <ConditionalSuccess error={error} order={order} />
                 </TableCell>
                 <TableCell>
-                    {(!invoice && (error ? '' : 'Missing Invoice')) ||
+                    {
+                        !invoice && (error ? '' : 'Missing Invoice')
+                        /* ||
+
                         (isUploaded ? (
                             <>
                                 <BooleanCheckMark value={isUploaded} />
@@ -338,7 +385,8 @@ const OrderView = (props: { order: WcOrder; brief?: boolean }) => {
                                     Upload
                                 </Button>
                             )
-                        ))}
+                        )) */
+                    }
                 </TableCell>
 
                 <TableCell></TableCell>
@@ -374,10 +422,10 @@ const UtilityPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | undefined>();
 
-    const [fromDate, setFromDate] = useState('2022-03-01');
-    const [toDate, setToDate] = useState('2022-03-01');
+    const [fromDate, setFromDate] = useState('2022-07-01');
+    const [toDate, setToDate] = useState('2022-07-30');
     const [provider, setProvider] = useState<string | undefined>();
-    const [status, setStatus] = useState<'completed' | 'refunded'>('completed');
+    const [status, setStatus] = useState<'completed' | 'refunded'>('refunded');
 
     useEffect(() => {
         if (loading || error) return;
@@ -394,7 +442,19 @@ const UtilityPage = () => {
             })
             .then(({ data }) => {
                 if (data) {
-                    setOrders((data as WcOrder[]).reverse());
+                    setOrders(
+                        (data as WcOrder[])
+                            .reverse()
+                            // Filter out Orders that already have valid Invoice
+                            .filter(
+                                (order) =>
+                                    !order.meta_data.find(
+                                        (datum) =>
+                                            datum.key ===
+                                            '_fortnox_invoice_reference'
+                                    )
+                            )
+                    );
                 }
             })
             .catch((reason) => {
@@ -428,12 +488,15 @@ const UtilityPage = () => {
                 }`
             );
         }
+        console.log(
+            `Finished uploading orders for date ${fromDate} -> ${toDate}`
+        );
         setLoading(false);
     };
 
     return (
         <>
-            <Button onClick={() => uploadAll()}>Upload All</Button>
+            {/* <Button onClick={() => uploadAll()}>Upload All</Button> */}
             <LocalizationProvider
                 dateAdapter={AdapterDateFns}
                 adapterLocale={svLocale}
@@ -499,6 +562,7 @@ const UtilityPage = () => {
                     <option value={'refunded'}>Refunded</option>
                 </NativeSelect>
             </LocalizationProvider>
+            <h3>Amount of Orders: {orders.length}</h3>
             <TableContainer component={Paper} sx={{ paddingTop: '10vh' }}>
                 <Grid container rowSpacing={6}>
                     <Grid item>

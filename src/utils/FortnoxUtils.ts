@@ -6,6 +6,7 @@ import {
     WcOrder,
     WcOrders,
     SupplierInvoice,
+    Voucher,
 } from 'findus';
 import fetchJson from '../common/fetchJson';
 import { loadToken } from './TokenUtils';
@@ -25,19 +26,21 @@ interface InvoiceData {
     DocumentLink?: string;
     OrderKey?: string;
     SupplierInvoice?: SupplierInvoice;
+    Voucher?: Voucher;
+    Warning?: string;
 }
 
 abstract class FortnoxUtils {
     public static readonly apiUrl = 'http://localhost:8080';
 
-    public static tryCreateExpense = (order: WcOrder): Expense | undefined => {
+    /* public static tryCreateExpense = (order: WcOrder): Expense | undefined => {
         const paymentMethod: string | undefined =
             WcOrders.tryGetPaymentMethod(order);
 
         return paymentMethod && WcOrders.hasPaymentFee(order, paymentMethod)
             ? WcOrders.tryCreatePaymentFeeExpense(order)
             : undefined;
-    };
+    }; */
 
     public static createResource = async (
         resources: 'articles' | 'customers' | 'invoices' | 'inbox',
@@ -57,7 +60,7 @@ abstract class FortnoxUtils {
         const token = loadToken();
         if (!token) return;
 
-        console.log({ data });
+        //console.log({ data });
         const response = await fetchJson(
             `${FortnoxUtils.apiUrl}/fortnox/${resources}`,
             {
@@ -70,7 +73,7 @@ abstract class FortnoxUtils {
         ).catch((reason) => {
             console.log({ reason });
         });
-        console.log({ response });
+        //console.log({ response });
         if (!response) return;
         if (!response.json || !response.json.data) return response as any;
 
@@ -98,7 +101,9 @@ abstract class FortnoxUtils {
         expenses: Expense[],
         documentLink?: string,
         orderKey?: string,
-        supplierInvoice?: SupplierInvoice
+        supplierInvoice?: SupplierInvoice,
+        voucher?: Voucher,
+        warning?: string
     ): Promise<Invoice> => {
         invoice.CustomerNumber = customerNumber;
         invoice.EmailInformation = undefined;
@@ -108,6 +113,8 @@ abstract class FortnoxUtils {
             DocumentLink: documentLink,
             OrderKey: orderKey,
             SupplierInvoice: supplierInvoice,
+            Voucher: voucher,
+            Warning: warning,
         })) as InvoiceData;
         return data?.Invoice;
     };
