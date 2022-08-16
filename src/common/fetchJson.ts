@@ -4,7 +4,7 @@ const fetchJson = (
     url: string,
     options?: {
         headers?: Headers;
-        method?: 'POST' | 'GET';
+        method?: 'POST' | 'GET' | 'PUT' | 'PATCH';
         body?: string | Record<string, string>;
     }
 ) => {

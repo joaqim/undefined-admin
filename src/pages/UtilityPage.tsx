@@ -140,7 +140,9 @@ const ConditionalSuccess = (props: {
     return <CheckBox />;
 };
 
-const tryUpload = async (order: WcOrder): Promise<Invoice | undefined> => {
+const tryUpload = async (
+    order: WcOrder
+): Promise<Record<"Invoice", Invoice | undefined> | undefined> => {
     try {
         let paymentMethod: 'Stripe' | 'PayPal' | undefined;
         try {
